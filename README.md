@@ -49,3 +49,9 @@ The app ships as one Node process — `npm run build` builds the frontend into `
 4. Deploy.
 
 Either way, without `ANTHROPIC_API_KEY` set the live site still works — it just serves template-based itineraries instead of Claude-generated ones.
+
+## Deploying (GitHub Pages — static only)
+
+`.github/workflows/deploy-pages.yml` builds the frontend (`npm run build:pages`, which sets the correct `/Travel-AI/` base path) and publishes it to GitHub Pages on every push to `main`, or on demand via **Actions → Deploy static build to GitHub Pages → Run workflow**.
+
+GitHub Pages only serves static files — there's no server, so `/api/itinerary` is unreachable there. The app detects this automatically and falls back to the local template generator (same as when no API key is set), so the site still works end to end; it just never calls Claude. For real AI-generated itineraries, use the Render deployment above instead.

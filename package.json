@@ -8,6 +8,7 @@
     "dev:client": "vite",
     "dev:server": "tsx watch server/index.ts",
     "build": "tsc -b && vite build",
+    "build:pages": "tsc -b && vite build --base=/Travel-AI/",
     "start": "tsx server/index.ts",
     "lint": "oxlint",
     "preview": "vite preview"
