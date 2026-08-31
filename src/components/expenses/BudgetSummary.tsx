@@ -9,6 +9,8 @@ export function BudgetSummary({ budget, expenses }: { budget: number; expenses: 
   const remaining = budget - spent;
   const pct = budget > 0 ? Math.min((spent / budget) * 100, 100) : 0;
   const over = spent > budget && budget > 0;
+  const currencies = new Set(expenses.map((e) => e.currency ?? "USD"));
+  const mixedCurrencies = currencies.size > 1;
 
   const byCategory = Object.entries(
     expenses.reduce<Record<string, number>>((acc, e) => {
@@ -33,6 +35,9 @@ export function BudgetSummary({ budget, expenses }: { budget: number; expenses: 
                 : `${formatCurrency(remaining)} left of ${formatCurrency(budget)}`
               : "No budget set for this trip"}
           </p>
+          {mixedCurrencies && (
+            <p className="mt-1 text-xs text-ink-400">Totals add raw amounts across currencies ({[...currencies].join(", ")}) — not converted.</p>
+          )}
           {budget > 0 && (
             <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-ink-100">
               <div

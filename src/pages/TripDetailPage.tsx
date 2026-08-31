@@ -1,17 +1,18 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, Navigate, useParams } from "react-router-dom";
-import { ArrowLeft, CalendarDays, Sparkles, Users } from "lucide-react";
+import { AnimatePresence, motion } from "framer-motion";
+import { ArrowLeft, CalendarDays, Cloud, CloudOff, Sparkles, Users } from "lucide-react";
 import clsx from "clsx";
 import { useTripStore } from "../store/useTripStore";
 import { DayCard } from "../components/itinerary/DayCard";
-import { ExpenseForm } from "../components/expenses/ExpenseForm";
-import { ExpenseList } from "../components/expenses/ExpenseList";
+import { DailyLog } from "../components/expenses/DailyLog";
 import { BudgetSummary } from "../components/expenses/BudgetSummary";
 import { estimateTripCost } from "../services/itineraryGenerator";
+import { getSheetsStatus, syncExpenseToSheet } from "../services/sheetsClient";
 import { formatCurrency, formatDateRange } from "../utils/format";
-import type { Trip } from "../types";
+import type { Expense, Trip } from "../types";
 
-const TABS = ["Itinerary", "Expenses"] as const;
+const TABS = ["Itinerary", "Daily Log"] as const;
 
 export function TripDetailPage() {
   const { tripId } = useParams();
@@ -20,9 +21,24 @@ export function TripDetailPage() {
   const updateTrip = useTripStore((s) => s.updateTrip);
   const addExpense = useTripStore((s) => s.addExpense);
   const removeExpense = useTripStore((s) => s.removeExpense);
+  const updateExpense = useTripStore((s) => s.updateExpense);
   const allExpenses = useTripStore((s) => s.expenses);
   const expenses = useMemo(() => (tripId ? allExpenses.filter((e) => e.tripId === tripId) : []), [allExpenses, tripId]);
   const [tab, setTab] = useState<(typeof TABS)[number]>("Itinerary");
+  const [sheetsOn, setSheetsOn] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    getSheetsStatus().then(setSheetsOn);
+  }, []);
+
+  const handleAddExpense = (expense: Expense) => {
+    addExpense(expense);
+    if (sheetsOn) {
+      syncExpenseToSheet(expense, trip?.destination ?? "").then((ok) => {
+        if (ok) updateExpense(expense.id, { syncedToSheets: true });
+      });
+    }
+  };
 
   if (!tripId || !trip) return <Navigate to="/trips" replace />;
 
@@ -92,35 +108,58 @@ export function TripDetailPage() {
           )}
         </div>
 
-        <div className="flex gap-1 px-5 pt-3">
-          {TABS.map((t) => (
-            <button
-              key={t}
-              onClick={() => setTab(t)}
+        <div className="flex items-center justify-between gap-1 px-5 pt-3">
+          <div className="flex gap-1">
+            {TABS.map((t) => (
+              <button
+                key={t}
+                onClick={() => setTab(t)}
+                className={clsx(
+                  "rounded-full px-4 py-1.5 text-sm font-medium transition-colors",
+                  tab === t ? "bg-ink-800 text-white" : "text-ink-500 hover:bg-ink-50"
+                )}
+              >
+                {t}
+              </button>
+            ))}
+          </div>
+          {tab === "Daily Log" && sheetsOn !== null && (
+            <span
+              title={sheetsOn ? "New expenses sync to your Google Sheet automatically" : "Google Sheets sync isn't configured on the server"}
               className={clsx(
-                "rounded-full px-4 py-1.5 text-sm font-medium transition-colors",
-                tab === t ? "bg-ink-800 text-white" : "text-ink-500 hover:bg-ink-50"
+                "flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium",
+                sheetsOn ? "bg-teal-500/10 text-teal-600" : "bg-ink-100 text-ink-400"
               )}
             >
-              {t}
-            </button>
-          ))}
+              {sheetsOn ? <Cloud size={12} /> : <CloudOff size={12} />}
+              {sheetsOn ? "Sheets sync on" : "Sheets not connected"}
+            </span>
+          )}
         </div>
 
-        <div className="p-5">
-          {tab === "Itinerary" ? (
-            <div className="space-y-4">
-              {trip.itinerary.map((day) => (
-                <DayCard key={day.id} day={day} onRemoveActivity={(activityId) => removeActivity(trip.id, day.id, activityId)} />
-              ))}
-            </div>
-          ) : (
-            <div className="space-y-5">
-              <BudgetSummary budget={trip.budget} expenses={expenses} />
-              <ExpenseForm tripId={trip.id} onAdd={addExpense} />
-              <ExpenseList expenses={expenses} onRemove={removeExpense} />
-            </div>
-          )}
+        <div className="overflow-hidden p-5">
+          <AnimatePresence mode="wait" initial={false}>
+            <motion.div
+              key={tab}
+              initial={{ opacity: 0, x: tab === "Daily Log" ? 12 : -12 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: tab === "Daily Log" ? -12 : 12 }}
+              transition={{ duration: 0.2, ease: "easeOut" }}
+            >
+              {tab === "Itinerary" ? (
+                <div className="space-y-4">
+                  {trip.itinerary.map((day) => (
+                    <DayCard key={day.id} day={day} onRemoveActivity={(activityId) => removeActivity(trip.id, day.id, activityId)} />
+                  ))}
+                </div>
+              ) : (
+                <div className="space-y-5">
+                  <BudgetSummary budget={trip.budget} expenses={expenses} />
+                  <DailyLog trip={trip} expenses={expenses} onAdd={handleAddExpense} onRemove={removeExpense} />
+                </div>
+              )}
+            </motion.div>
+          </AnimatePresence>
         </div>
       </div>
     </div>

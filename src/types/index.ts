@@ -41,11 +41,15 @@ export type ExpenseCategory =
 export interface Expense {
   id: string;
   tripId: string;
+  dayNumber?: number; // links to ItineraryDay.dayNumber for the daily log
   category: ExpenseCategory;
   label: string;
   amount: number;
+  currency?: string;
   date: string; // ISO date
   note?: string;
+  receiptImage?: string; // small compressed data URL thumbnail, for reference
+  syncedToSheets?: boolean;
 }
 
 export interface Trip {

@@ -1,9 +1,14 @@
-export function formatCurrency(amount: number): string {
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    maximumFractionDigits: 0,
-  }).format(amount);
+export function formatCurrency(amount: number, currency = "USD"): string {
+  try {
+    return new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency,
+      maximumFractionDigits: 0,
+    }).format(amount);
+  } catch {
+    // Unrecognized/invalid currency code (e.g. a typo from manual entry) — fall back to a plain label.
+    return `${currency} ${Math.round(amount).toLocaleString("en-US")}`;
+  }
 }
 
 export function formatDateRange(start: string | null, end: string | null): string {

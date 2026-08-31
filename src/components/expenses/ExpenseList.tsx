@@ -1,4 +1,4 @@
-import { Trash2 } from "lucide-react";
+import { Cloud, Trash2 } from "lucide-react";
 import { EXPENSE_CATEGORY_META } from "../../data/expenseCategories";
 import { formatCurrency, formatDay } from "../../utils/format";
 import type { Expense } from "../../types";
@@ -17,16 +17,28 @@ export function ExpenseList({ expenses, onRemove }: { expenses: Expense[]; onRem
         const Icon = meta.icon;
         return (
           <div key={expense.id} className="group flex items-center gap-3 px-4 py-3">
-            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg" style={{ backgroundColor: `${meta.color}1a`, color: meta.color }}>
-              <Icon size={16} />
-            </span>
+            {expense.receiptImage ? (
+              <img src={expense.receiptImage} alt="Receipt" className="h-9 w-9 shrink-0 rounded-lg object-cover" />
+            ) : (
+              <span
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg"
+                style={{ backgroundColor: `${meta.color}1a`, color: meta.color }}
+              >
+                <Icon size={16} />
+              </span>
+            )}
             <div className="min-w-0 flex-1">
               <p className="truncate text-sm font-medium text-ink-800">{expense.label}</p>
               <p className="text-xs text-ink-400">
                 {meta.label} · {formatDay(expense.date)}
               </p>
             </div>
-            <span className="text-sm font-semibold text-ink-800">{formatCurrency(expense.amount)}</span>
+            {expense.syncedToSheets && (
+              <span title="Synced to Google Sheets" className="text-teal-500">
+                <Cloud size={13} />
+              </span>
+            )}
+            <span className="text-sm font-semibold text-ink-800">{formatCurrency(expense.amount, expense.currency)}</span>
             <button
               onClick={() => onRemove(expense.id)}
               aria-label="Remove expense"
