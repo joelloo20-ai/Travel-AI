@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import { syncItineraryToAppsScript } from "../services/appsScriptClient";
 import type { Expense, ItineraryDay, Trip } from "../types";
 
 interface TripStore {
@@ -25,7 +26,13 @@ export const useTripStore = create<TripStore>()(
       trips: [],
       expenses: [],
 
-      addTrip: (trip) => set((state) => ({ trips: [trip, ...state.trips] })),
+      addTrip: (trip) => {
+        set((state) => ({ trips: [trip, ...state.trips] }));
+        // Fire-and-forget: every trip-creation path (AI planner, template, curated
+        // destination) funnels through here, so this is the one place that needs to
+        // push the itinerary out to the shared sheet. Never blocks the UI or throws.
+        void syncItineraryToAppsScript(trip);
+      },
 
       updateTrip: (tripId, patch) =>
         set((state) => ({
