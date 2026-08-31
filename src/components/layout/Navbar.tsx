@@ -13,7 +13,7 @@ export function Navbar() {
     <header className="sticky top-0 z-30 border-b border-ink-100 bg-cream-50/90 backdrop-blur">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6">
         <NavLink to="/" className="flex items-center gap-2">
-          <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-coral-500 text-white">
+          <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-blue-400 to-blue-600 text-white shadow-glow">
             <Compass size={18} strokeWidth={2.5} />
           </span>
           <span className="font-display text-lg font-semibold text-ink-900">Wayfare</span>
@@ -28,7 +28,7 @@ export function Navbar() {
               className={({ isActive }) =>
                 clsx(
                   "flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium transition-colors sm:px-4",
-                  isActive ? "bg-coral-500 text-white shadow-soft" : "text-ink-500 hover:bg-ink-50 hover:text-ink-800"
+                  isActive ? "bg-gradient-to-b from-blue-500 to-blue-600 text-white shadow-glow" : "text-ink-500 hover:bg-ink-50 hover:text-ink-800"
                 )
               }
             >

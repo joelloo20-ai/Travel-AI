@@ -16,7 +16,7 @@ export function DayCard({
     <div className="animate-fade-up rounded-2xl border border-ink-100 bg-cream-100/60 p-4">
       <div className="mb-3 flex items-baseline justify-between">
         <div>
-          <span className="text-xs font-semibold uppercase tracking-wide text-coral-600">Day {day.dayNumber}</span>
+          <span className="text-xs font-semibold uppercase tracking-wide text-blue-600">Day {day.dayNumber}</span>
           <h3 className="font-display text-lg font-medium text-ink-900">{day.title}</h3>
           {day.date && <p className="text-xs text-ink-400">{formatDay(day.date)}</p>}
         </div>

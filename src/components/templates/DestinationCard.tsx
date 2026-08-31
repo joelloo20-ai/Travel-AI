@@ -34,7 +34,7 @@ export function DestinationCard({ template, onSelect, index }: { template: Desti
             <Wallet size={13} />
             ~${template.avgDailyBudget}/day
           </span>
-          <span className="ml-auto flex items-center gap-1 rounded-full bg-coral-500 px-3 py-1.5 font-semibold text-white opacity-0 transition-opacity group-hover:opacity-100">
+          <span className="ml-auto flex items-center gap-1 rounded-full bg-blue-500 px-3 py-1.5 font-semibold text-white opacity-0 transition-opacity group-hover:opacity-100">
             Start trip <ArrowUpRight size={13} />
           </span>
         </div>

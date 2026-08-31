@@ -22,7 +22,7 @@ export function QuickReplies({
           <button
             key={label}
             onClick={() => onSingle(label)}
-            className="rounded-full border border-coral-200 bg-coral-50 px-3.5 py-1.5 text-sm font-medium text-coral-700 transition-colors hover:bg-coral-100"
+            className="rounded-full border border-blue-200 bg-blue-50 px-3.5 py-1.5 text-sm font-medium text-blue-700 transition-colors hover:bg-blue-100"
           >
             {label}
           </button>
@@ -47,8 +47,8 @@ export function QuickReplies({
               className={clsx(
                 "flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-sm font-medium transition-colors",
                 active
-                  ? "border-coral-500 bg-coral-500 text-white"
-                  : "border-coral-200 bg-coral-50 text-coral-700 hover:bg-coral-100"
+                  ? "border-blue-500 bg-blue-500 text-white"
+                  : "border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100"
               )}
             >
               {active && <Check size={13} strokeWidth={3} />}
