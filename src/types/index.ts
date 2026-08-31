@@ -62,6 +62,7 @@ export interface Trip {
   createdAt: string;
   templateId?: string;
   status: "planning" | "upcoming" | "completed";
+  itinerarySource?: "ai" | "template";
 }
 
 export interface ChatMessage {

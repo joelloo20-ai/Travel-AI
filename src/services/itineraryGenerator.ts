@@ -29,7 +29,7 @@ function minutesToTime(totalMinutes: number): string {
   return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
 }
 
-function addDays(iso: string, n: number): string {
+export function addDays(iso: string, n: number): string {
   const d = new Date(iso + "T00:00:00");
   d.setDate(d.getDate() + n);
   return d.toISOString().slice(0, 10);
@@ -73,10 +73,10 @@ function toActivity(
 }
 
 /**
- * Rule-based itinerary generator. This stands in for a live LLM call today —
- * it takes the same shape of input a prompt to Claude would, and returns
- * fully structured data. Swap the body of `generateItinerary` for a real
- * `services/aiClient.ts` call once an API key is wired up; callers don't change.
+ * Rule-based itinerary generator. The app's primary path now asks Claude
+ * for itineraries (see server/itineraryService.ts); this function is the
+ * server-side fallback used when no API key is configured or a request
+ * fails, so the app still works out of the box.
  */
 export function generateItinerary(params: GenerateItineraryParams): ItineraryDay[] {
   const { destination, days, pace, startDate, travelers, budget } = params;

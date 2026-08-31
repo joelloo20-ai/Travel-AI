@@ -1,5 +1,5 @@
 import { useCallback, useRef, useState } from "react";
-import { generateItinerary } from "../services/itineraryGenerator";
+import { requestItinerary } from "../services/itineraryClient";
 import type { ChatMessage, InterestTag, ItineraryDay, TripPace } from "../types";
 
 type Step =
@@ -79,6 +79,7 @@ export function usePlannerChat() {
   const [step, setStep] = useState<Step>("destination");
   const [isTyping, setIsTyping] = useState(false);
   const [generatedItinerary, setGeneratedItinerary] = useState<ItineraryDay[] | null>(null);
+  const [itinerarySource, setItinerarySource] = useState<"ai" | "template" | null>(null);
   const draftRef = useRef<Draft>({
     destination: "",
     days: 5,
@@ -101,12 +102,13 @@ export function usePlannerChat() {
     setMessages((prev) => [...prev, makeMessage("user", text)]);
   }, []);
 
-  const runGeneration = useCallback(() => {
+  const runGeneration = useCallback(async () => {
     setStep("generating");
     setIsTyping(true);
-    window.setTimeout(() => {
-      const d = draftRef.current;
-      const itinerary = generateItinerary({
+    const d = draftRef.current;
+
+    try {
+      const { itinerary, source, warning } = await requestItinerary({
         destination: d.destination,
         days: d.days,
         pace: d.pace,
@@ -116,16 +118,26 @@ export function usePlannerChat() {
         travelers: d.travelers,
       });
       setGeneratedItinerary(itinerary);
+      setItinerarySource(source);
+      setIsTyping(false);
+      const summary =
+        source === "ai"
+          ? `Here's a first pass at ${d.days} days in ${d.destination} — take a look on the right. You can tweak anything, then save it to your trips whenever you're ready.`
+          : `Here's a quick-start plan for ${d.days} days in ${d.destination} (${warning ?? "using the built-in template"}). Take a look on the right — you can tweak anything, then save it to your trips.`;
+      setMessages((prev) => [...prev, makeMessage("assistant", summary)]);
+      setStep("done");
+    } catch {
       setIsTyping(false);
       setMessages((prev) => [
         ...prev,
         makeMessage(
           "assistant",
-          `Here's a first pass at ${d.days} days in ${d.destination} — take a look on the right. You can tweak anything, then save it to your trips whenever you're ready.`
+          "I couldn't reach the planning service just now. Want to try again?",
+          ["Try again"]
         ),
       ]);
-      setStep("done");
-    }, 1400);
+      setStep("pace");
+    }
   }, []);
 
   const submitFreeText = useCallback(
@@ -158,6 +170,11 @@ export function usePlannerChat() {
   const submitQuickReply = useCallback(
     (label: string) => {
       pushUser(label);
+
+      if (label === "Try again") {
+        runGeneration();
+        return;
+      }
 
       if (step === "duration") {
         const match = DURATION_OPTIONS.find((o) => o.label === label);
@@ -215,6 +232,7 @@ export function usePlannerChat() {
     step,
     isTyping,
     generatedItinerary,
+    itinerarySource,
     draft: draftRef.current,
     interestOptions: INTEREST_OPTIONS,
     submitFreeText,

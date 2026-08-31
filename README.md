@@ -11,16 +11,47 @@ An AI-assistant-driven travel planner: chat with a planning assistant to build a
 
 ## Tech stack
 
-React + TypeScript + Vite, Tailwind CSS v4, Zustand (persisted to `localStorage`), React Router, Recharts, Lucide icons.
+**Frontend:** React + TypeScript + Vite, Tailwind CSS v4, Zustand (persisted to `localStorage`), React Router, Recharts, Lucide icons.
+
+**Backend:** a small Express server (`server/`) that holds the Anthropic API key and is the only thing that ever talks to Claude — the browser never sees the key.
 
 ## Itinerary generation
 
-`src/services/itineraryGenerator.ts` is a rule-based generator that fills a day-by-day plan from a destination-agnostic activity pool (`src/data/activityPool.ts`), scaled by pace, interests, and budget. It's intentionally isolated behind a single function so it can be swapped for a real LLM call (e.g. the Claude API) later without touching any UI code — the input/output shape already matches what a prompt-based generator would need.
+`POST /api/itinerary` (`server/index.ts` + `server/itineraryService.ts`) asks **Claude Sonnet 5** to plan a real, specific day-by-day itinerary — named neighborhoods, restaurants, and landmarks for the destination, not generic filler — and validates the response against a Zod schema (`server/itinerarySchema.ts`) via the SDK's structured-output support, so the result always matches the app's `ItineraryDay[]` shape.
+
+If `ANTHROPIC_API_KEY` isn't set, or a request to Claude fails for any reason, the server transparently falls back to `src/services/itineraryGenerator.ts` — a rule-based generator over a destination-agnostic activity pool (`src/data/activityPool.ts`) — so the app always returns an itinerary. Every response carries a `source: "ai" | "template"` flag; the UI shows an "AI-planned" badge when Claude generated the plan, and surfaces a plain-language note in chat when it fell back.
 
 ## Development
 
 ```bash
 npm install
-npm run dev      # start the dev server
-npm run build    # typecheck + production build
+cp .env.example .env   # then add your ANTHROPIC_API_KEY to get real AI-planned itineraries
+npm run dev             # runs the Vite dev server + Express API together
+npm run build            # typecheck + production build (frontend)
+npm start                # run the production server (serves the built frontend + API from one process)
 ```
+
+Without an `ANTHROPIC_API_KEY`, everything still works — itineraries just come from the built-in template generator instead of Claude.
+
+## Deploying (Render)
+
+The app ships as one Node process — `npm run build` builds the frontend into `dist/`, `npm start` runs the Express server, which serves `dist/` as static files *and* the `/api/*` routes on the same port. That single-process shape works on any Node host; a `render.yaml` blueprint is included for [Render](https://render.com/).
+
+**Option A — Blueprint (one click):**
+1. In the Render dashboard: **New +** → **Blueprint**, pick this repo. Render reads `render.yaml` and creates the service for you.
+2. When prompted, set the `ANTHROPIC_API_KEY` environment variable (it's marked as a secret in the blueprint, so Render will ask for it rather than reading it from the repo).
+3. Deploy. Render runs `npm install --include=dev && npm run build`, then `npm start`, and gives you a `https://<your-service>.onrender.com` URL.
+
+**Option B — Manual web service:**
+1. **New +** → **Web Service** → connect this repo.
+2. Runtime: `Node`. Build command: `npm install --include=dev && npm run build`. Start command: `npm start`.
+3. Add environment variable `ANTHROPIC_API_KEY` with your key.
+4. Deploy.
+
+Either way, without `ANTHROPIC_API_KEY` set the live site still works — it just serves template-based itineraries instead of Claude-generated ones.
+
+## Deploying (GitHub Pages — static only)
+
+`.github/workflows/deploy-pages.yml` builds the frontend (`npm run build:pages`, which sets the correct `/Travel-AI/` base path) and publishes it to GitHub Pages on every push to `main`, or on demand via **Actions → Deploy static build to GitHub Pages → Run workflow**.
+
+GitHub Pages only serves static files — there's no server, so `/api/itinerary` is unreachable there. The app detects this automatically and falls back to the local template generator (same as when no API key is set), so the site still works end to end; it just never calls Claude. For real AI-generated itineraries, use the Render deployment above instead.

@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { Link, Navigate, useParams } from "react-router-dom";
-import { ArrowLeft, CalendarDays, Users } from "lucide-react";
+import { ArrowLeft, CalendarDays, Sparkles, Users } from "lucide-react";
 import clsx from "clsx";
 import { useTripStore } from "../store/useTripStore";
 import { DayCard } from "../components/itinerary/DayCard";
@@ -76,6 +76,12 @@ export function TripDetailPage() {
           {trip.budget > 0 && (
             <span>
               Budget <strong className="text-ink-800">{formatCurrency(trip.budget)}</strong>
+            </span>
+          )}
+          {trip.itinerarySource === "ai" && (
+            <span className="flex items-center gap-1 rounded-full bg-teal-500/10 px-2 py-0.5 text-xs font-semibold text-teal-600">
+              <Sparkles size={11} />
+              AI-planned
             </span>
           )}
         </div>
