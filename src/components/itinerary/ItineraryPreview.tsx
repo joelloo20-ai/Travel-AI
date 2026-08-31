@@ -22,7 +22,7 @@ export function ItineraryPreview({
   if (generating) {
     return (
       <div className="flex h-full flex-col items-center justify-center gap-3 px-8 text-center">
-        <span className="flex h-14 w-14 animate-pulse items-center justify-center rounded-2xl bg-coral-50 text-coral-500">
+        <span className="flex h-14 w-14 animate-pulse items-center justify-center rounded-2xl bg-gradient-to-br from-blue-100 to-blue-50 text-blue-600 shadow-soft">
           <Sparkles size={24} />
         </span>
         <h3 className="font-display text-xl font-medium text-ink-800">Planning {destination}...</h3>
@@ -36,7 +36,7 @@ export function ItineraryPreview({
   if (!itinerary) {
     return (
       <div className="flex h-full flex-col items-center justify-center gap-3 px-8 text-center">
-        <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-coral-50 text-coral-500">
+        <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-100 to-blue-50 text-blue-600 shadow-soft">
           <MapPin size={24} />
         </span>
         <h3 className="font-display text-xl font-medium text-ink-800">Your itinerary builds here</h3>
@@ -51,11 +51,11 @@ export function ItineraryPreview({
 
   return (
     <div className="flex h-full flex-col">
-      <div className="border-b border-ink-100 bg-white/70 px-5 py-4">
+      <div className="border-b border-ink-100/70 bg-white/80 px-5 py-4 backdrop-blur-sm">
         <div className="flex items-center justify-between gap-3">
           <div>
             <div className="flex items-center gap-2">
-              <p className="text-xs font-semibold uppercase tracking-wide text-coral-600">Draft itinerary</p>
+              <p className="text-xs font-semibold uppercase tracking-wide text-blue-600">Draft itinerary</p>
               {source === "ai" && (
                 <span className="flex items-center gap-1 rounded-full bg-teal-500/10 px-2 py-0.5 text-[11px] font-semibold text-teal-600">
                   <Sparkles size={10} />
@@ -71,7 +71,7 @@ export function ItineraryPreview({
           <button
             onClick={onSave}
             disabled={saved}
-            className="flex shrink-0 items-center gap-1.5 rounded-full bg-coral-500 px-4 py-2 text-sm font-semibold text-white shadow-soft transition-opacity hover:opacity-90 disabled:opacity-50"
+            className="flex shrink-0 items-center gap-1.5 rounded-full bg-gradient-to-b from-blue-500 to-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-glow transition-all hover:brightness-110 disabled:opacity-50 disabled:shadow-none disabled:hover:brightness-100"
           >
             <Compass size={14} />
             {saved ? "Saved to trips" : "Save trip"}
