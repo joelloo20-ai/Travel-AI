@@ -16,7 +16,7 @@ export function TripCard({ trip }: { trip: Trip }) {
   return (
     <Link
       to={`/trips/${trip.id}`}
-      className="group overflow-hidden rounded-2xl border border-ink-100 bg-white shadow-soft transition-shadow hover:shadow-lift"
+      className="group overflow-hidden rounded-2xl border border-ink-100/80 bg-white shadow-soft transition-all hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-lift"
     >
       <div className="relative h-36 overflow-hidden">
         <img
