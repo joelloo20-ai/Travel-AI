@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { Link, Navigate, useParams } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { ArrowLeft, CalendarDays, Cloud, CloudOff, Sparkles, Users } from "lucide-react";
@@ -8,7 +8,7 @@ import { DayCard } from "../components/itinerary/DayCard";
 import { DailyLog } from "../components/expenses/DailyLog";
 import { BudgetSummary } from "../components/expenses/BudgetSummary";
 import { estimateTripCost } from "../services/itineraryGenerator";
-import { getSheetsStatus, syncExpenseToSheet } from "../services/sheetsClient";
+import { isAppsScriptConfigured, syncExpenseToAppsScript } from "../services/appsScriptClient";
 import { formatCurrency, formatDateRange } from "../utils/format";
 import type { Expense, Trip } from "../types";
 
@@ -25,16 +25,12 @@ export function TripDetailPage() {
   const allExpenses = useTripStore((s) => s.expenses);
   const expenses = useMemo(() => (tripId ? allExpenses.filter((e) => e.tripId === tripId) : []), [allExpenses, tripId]);
   const [tab, setTab] = useState<(typeof TABS)[number]>("Itinerary");
-  const [sheetsOn, setSheetsOn] = useState<boolean | null>(null);
-
-  useEffect(() => {
-    getSheetsStatus().then(setSheetsOn);
-  }, []);
+  const sheetsOn = isAppsScriptConfigured();
 
   const handleAddExpense = (expense: Expense) => {
     addExpense(expense);
     if (sheetsOn) {
-      syncExpenseToSheet(expense, trip?.destination ?? "").then((ok) => {
+      syncExpenseToAppsScript(expense, trip?.destination ?? "").then((ok) => {
         if (ok) updateExpense(expense.id, { syncedToSheets: true });
       });
     }
@@ -123,9 +119,9 @@ export function TripDetailPage() {
               </button>
             ))}
           </div>
-          {tab === "Daily Log" && sheetsOn !== null && (
+          {tab === "Daily Log" && (
             <span
-              title={sheetsOn ? "New expenses sync to your Google Sheet automatically" : "Google Sheets sync isn't configured on the server"}
+              title={sheetsOn ? "New expenses sync to your Google Sheet automatically" : "Google Sheets sync isn't configured for this build"}
               className={clsx(
                 "flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium",
                 sheetsOn ? "bg-teal-500/10 text-teal-600" : "bg-ink-100 text-ink-400"
