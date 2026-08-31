@@ -84,6 +84,12 @@ export function TripDetailPage() {
               AI-planned
             </span>
           )}
+          {trip.itinerarySource === "curated" && (
+            <span className="flex items-center gap-1 rounded-full bg-coral-500/10 px-2 py-0.5 text-xs font-semibold text-coral-600">
+              <Sparkles size={11} />
+              Curated itinerary
+            </span>
+          )}
         </div>
 
         <div className="flex gap-1 px-5 pt-3">
