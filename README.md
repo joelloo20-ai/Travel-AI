@@ -10,7 +10,7 @@ An AI-assistant-driven travel planner: chat with a planning assistant to build a
 - **My Trips** (`/trips`) — every saved trip as a card with dates, travelers, and estimated cost. Pull down to refresh on touch devices.
 - **Trip detail** (`/trips/:id`) — edit the itinerary (remove activities, change status), and a **Daily Log** tab that tracks expenses day-by-day alongside that day's planned activities.
 - **Receipt scanning** — add an expense by snapping a photo; Claude reads the merchant, amount, currency, and category so you just confirm and save.
-- **Google Sheets sync** (optional) — every expense you save can also append as a row to a Google Sheet in real time, so you (or anyone the sheet is shared with) can watch spending land live outside the app.
+- **Google Sheets sync** (optional) — every trip you plan (AI-generated, from a template, or a curated destination) writes its full day-by-day itinerary to its own tab in a Google Sheet, and every expense you save appends as a row there too, in real time — so you (or anyone the sheet is shared with) can see plans and spending land live outside the app. Works on the static GitHub Pages build too, since it talks directly to a Google Apps Script Web App rather than a server.
 
 ## Tech stack
 
@@ -30,21 +30,21 @@ If `ANTHROPIC_API_KEY` isn't set, or a request to Claude fails for any reason, t
 
 ## Google Sheets sync
 
-Optional. When configured, every expense you save also appends as a row to a Google Sheet via a service account — no OAuth login flow, and the app never asks for your Google password.
+Optional. When configured, every trip's full itinerary and every expense you save also lands in a shared Google Sheet — written from the *browser*, directly, via a Google Apps Script Web App. There's no service account and no server involved, which is what makes this work even on the static GitHub Pages deployment.
 
-**Setup (one-time, ~5 minutes):**
-1. In the [Google Cloud Console](https://console.cloud.google.com/), create a project (or use an existing one).
-2. **APIs & Services → Library** → enable the **Google Sheets API**.
-3. **APIs & Services → Credentials → Create Credentials → Service Account**. Give it any name and finish the wizard (no roles needed).
-4. Open the new service account → **Keys → Add Key → Create new key → JSON**. This downloads a `.json` file — keep it private, it's a credential.
-5. Create (or open) the Google Sheet you want expenses to land in, and note its ID from the URL: `https://docs.google.com/spreadsheets/d/`**`THIS_PART`**`/edit`.
-6. Click **Share** on that sheet and add the service account's email (looks like `something@your-project.iam.gserviceaccount.com`, found in the JSON file as `client_email`) as an **Editor**.
-7. Set three environment variables (in `.env` locally, or your host's environment variables panel):
-   - `GOOGLE_SHEET_ID` — the ID from step 5.
-   - `GOOGLE_SERVICE_ACCOUNT_EMAIL` — the `client_email` field from the JSON.
-   - `GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY` — the `private_key` field from the JSON, pasted as-is (it contains literal `\n` sequences — the app handles those; most host dashboards accept multi-line env values directly).
+Each trip gets its own tab (named after the destination). A companion Google Form feeding the same sheet still works side by side — the app and the Form both write into the same per-trip tab, tagged with a `Source` column ("App" or "Form") so you can tell them apart, and creating a trip in the app automatically adds it as an option on the Form too.
 
-The app auto-detects this: the Daily Log tab shows a "Sheets sync on" badge once all three are set, and "Sheets not connected" otherwise — either way, expenses always save locally regardless of sync status. The first successful sync creates a header row (Date, Trip, Day, Category, Label, Amount, Currency, Note) automatically.
+**Setup (one-time, ~10 minutes):**
+1. Open (or create) the Google Sheet you want trips and expenses to land in.
+2. **Extensions → Apps Script**, and replace the default `Code.gs` contents with [`apps-script/Code.gs`](apps-script/Code.gs) from this repo.
+3. Edit the constants near the top of the script: set `SPREADSHEET_ID` to your sheet's ID (from its URL: `https://docs.google.com/spreadsheets/d/`**`THIS_PART`**`/edit`), `FORM_ID` to your Form's ID if you're using the Form + App combo (leave the placeholder if you're not — it just means trip names won't auto-sync to a Form), and change `SHARED_SECRET` to a value of your own choosing.
+4. **Deploy → New deployment**, type **Web app**, execute as **Me**, who has access **Anyone**. Deploy, and copy the `/exec` URL it gives you.
+5. Set two environment variables (in `.env` locally, and as a **repo secret** for GitHub Pages / an environment variable for Render — see the deploy sections below):
+   - `VITE_APPS_SCRIPT_URL` — the `/exec` URL from step 4.
+   - `VITE_APPS_SCRIPT_SHARED_SECRET` — the same value you set for `SHARED_SECRET` in step 3.
+6. Rebuild the app. These are build-time Vite variables (`VITE_*`), so changing them always requires a rebuild, not just a restart.
+
+The Daily Log tab shows a "Sheets sync on" badge once both variables are set at build time, and "Sheets not connected" otherwise — either way, trips and expenses always save locally regardless of sync status. Because `VITE_*` variables ship inside the JS bundle on a static site, `SHARED_SECRET` is only a light deterrent (anyone who opens dev tools on the live site can read it and the Web App URL), not real authentication — don't reuse a secret you care about elsewhere for it.
 
 ## Development
 
@@ -73,10 +73,12 @@ The app ships as one Node process — `npm run build` builds the frontend into `
 3. Add environment variable `ANTHROPIC_API_KEY` with your key.
 4. Deploy.
 
-Either way, without `ANTHROPIC_API_KEY` set the live site still works — it just serves template-based itineraries instead of Claude-generated ones. Add the three `GOOGLE_*` variables from the Sheets setup above the same way (Render → your service → Environment) to enable live Sheets sync there too.
+Either way, without `ANTHROPIC_API_KEY` set the live site still works — it just serves template-based itineraries instead of Claude-generated ones. Add the two `VITE_APPS_SCRIPT_*` variables from the Sheets setup above the same way (Render → your service → Environment) to enable live Sheets sync there too — and trigger a manual deploy afterward, since they're read at build time.
 
 ## Deploying (GitHub Pages — static only)
 
 `.github/workflows/deploy-pages.yml` builds the frontend (`npm run build:pages`, which sets the correct `/Travel-AI/` base path) and publishes it to GitHub Pages on every push to `main`, or on demand via **Actions → Deploy static build to GitHub Pages → Run workflow**.
 
 GitHub Pages only serves static files — there's no server, so `/api/itinerary` is unreachable there. The app detects this automatically and falls back to the local template generator (same as when no API key is set), so the site still works end to end; it just never calls Claude. For real AI-generated itineraries, use the Render deployment above instead.
+
+Google Sheets sync isn't affected by the missing server — it always talks directly to the Apps Script Web App from the browser (see the "Google Sheets sync" section above), so it works the same on GitHub Pages as anywhere else. To enable it here, add `VITE_APPS_SCRIPT_URL` and `VITE_APPS_SCRIPT_SHARED_SECRET` as **repository secrets** (**Settings → Secrets and variables → Actions → New repository secret**) — the workflow passes them into the build automatically.

@@ -5,7 +5,6 @@ import express from "express";
 import { z } from "zod";
 import { buildItinerary } from "./itineraryService";
 import { parseReceiptImage } from "./receiptService";
-import { appendExpenseRow, sheetsConfigured } from "./sheetsService";
 import type { InterestTag, TripPace } from "../src/types";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -59,33 +58,8 @@ app.post("/api/parse-receipt", async (req, res) => {
   res.json(result);
 });
 
-const SyncExpenseRequestSchema = z.object({
-  date: z.string(),
-  trip: z.string(),
-  day: z.number().nullable(),
-  category: z.string(),
-  label: z.string(),
-  amount: z.number(),
-  currency: z.string(),
-  note: z.string().optional(),
-});
-
-app.post("/api/sync-expense", async (req, res) => {
-  const parsed = SyncExpenseRequestSchema.safeParse(req.body);
-  if (!parsed.success) {
-    res.status(400).json({ ok: false, error: "Invalid request" });
-    return;
-  }
-  const result = await appendExpenseRow(parsed.data);
-  res.json(result);
-});
-
-app.get("/api/sheets/status", (_req, res) => {
-  res.json({ configured: sheetsConfigured });
-});
-
 app.get("/api/health", (_req, res) => {
-  res.json({ ok: true, aiConfigured: Boolean(process.env.ANTHROPIC_API_KEY), sheetsConfigured });
+  res.json({ ok: true, aiConfigured: Boolean(process.env.ANTHROPIC_API_KEY) });
 });
 
 const distDir = path.resolve(__dirname, "../dist");
