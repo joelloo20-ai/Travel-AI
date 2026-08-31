@@ -39,7 +39,7 @@ export function ChatPanel({ chat }: { chat: ReturnType<typeof usePlannerChat> })
         {isTyping && <TypingBubble />}
       </div>
 
-      <div className="border-t border-ink-100 bg-white/60 p-3 sm:p-4">
+      <div className="border-t border-ink-100/70 bg-white/70 p-3 backdrop-blur-sm sm:p-4">
         <div className="flex items-center gap-2 rounded-full border border-ink-100 bg-white px-2 py-1.5 shadow-soft focus-within:border-coral-300">
           <input
             value={input}
