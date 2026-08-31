@@ -4,7 +4,7 @@ import { addDays, generateItinerary, type GenerateItineraryParams } from "../src
 import type { Activity, ItineraryDay } from "../src/types";
 import { AiItinerarySchema, type AiItinerary } from "./itinerarySchema";
 
-const MODEL = "claude-opus-5";
+const MODEL = "claude-sonnet-5";
 
 const client = process.env.ANTHROPIC_API_KEY ? new Anthropic() : null;
 
