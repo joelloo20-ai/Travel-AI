@@ -35,7 +35,7 @@ export function TripDetailPage() {
         All trips
       </Link>
 
-      <div className="overflow-hidden rounded-2xl border border-ink-100 bg-white shadow-soft">
+      <div className="overflow-hidden rounded-2xl border border-ink-100/80 bg-white shadow-lift">
         <div className="relative h-44 sm:h-56">
           <img src={trip.coverImage} alt={trip.destination} className="h-full w-full object-cover" />
           <div className="absolute inset-0 bg-gradient-to-t from-ink-900/70 via-ink-900/10 to-transparent" />
@@ -92,8 +92,10 @@ export function TripDetailPage() {
               key={t}
               onClick={() => setTab(t)}
               className={clsx(
-                "rounded-full px-4 py-1.5 text-sm font-medium transition-colors",
-                tab === t ? "bg-ink-800 text-white" : "text-ink-500 hover:bg-ink-50"
+                "rounded-full px-4 py-1.5 text-sm font-medium transition-all",
+                tab === t
+                  ? "bg-gradient-to-b from-blue-500 to-blue-600 text-white shadow-glow"
+                  : "text-ink-500 hover:bg-ink-50"
               )}
             >
               {t}
