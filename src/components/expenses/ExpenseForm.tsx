@@ -29,7 +29,7 @@ export function ExpenseForm({ tripId, onAdd }: { tripId: string; onAdd: (expense
       <select
         value={category}
         onChange={(e) => setCategory(e.target.value as ExpenseCategory)}
-        className="rounded-lg border border-ink-100 bg-cream-50 px-2.5 py-2 text-sm text-ink-700 outline-none focus:border-coral-300"
+        className="rounded-lg border border-ink-100 bg-cream-50 px-2.5 py-2 text-sm text-ink-700 outline-none focus:border-blue-300"
       >
         {EXPENSE_CATEGORIES.map((c) => (
           <option key={c} value={c}>
@@ -41,7 +41,7 @@ export function ExpenseForm({ tripId, onAdd }: { tripId: string; onAdd: (expense
         value={label}
         onChange={(e) => setLabel(e.target.value)}
         placeholder="What was it for?"
-        className="flex-1 rounded-lg border border-ink-100 bg-cream-50 px-3 py-2 text-sm text-ink-700 outline-none placeholder:text-ink-400 focus:border-coral-300"
+        className="flex-1 rounded-lg border border-ink-100 bg-cream-50 px-3 py-2 text-sm text-ink-700 outline-none placeholder:text-ink-400 focus:border-blue-300"
       />
       <input
         value={amount}
@@ -50,7 +50,7 @@ export function ExpenseForm({ tripId, onAdd }: { tripId: string; onAdd: (expense
         type="number"
         min="0"
         placeholder="Amount"
-        className="w-full rounded-lg border border-ink-100 bg-cream-50 px-3 py-2 text-sm text-ink-700 outline-none placeholder:text-ink-400 focus:border-coral-300 sm:w-28"
+        className="w-full rounded-lg border border-ink-100 bg-cream-50 px-3 py-2 text-sm text-ink-700 outline-none placeholder:text-ink-400 focus:border-blue-300 sm:w-28"
       />
       <button
         onClick={submit}
