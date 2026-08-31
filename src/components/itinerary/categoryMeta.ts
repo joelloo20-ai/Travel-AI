@@ -13,7 +13,7 @@ import {
 import type { InterestTag } from "../../types";
 
 export const CATEGORY_META: Record<InterestTag | "logistics", { icon: LucideIcon; color: string; bg: string }> = {
-  food: { icon: Utensils, color: "text-coral-600", bg: "bg-coral-50" },
+  food: { icon: Utensils, color: "text-rose-600", bg: "bg-rose-50" },
   culture: { icon: Landmark, color: "text-amber-700", bg: "bg-amber-50" },
   nature: { icon: Trees, color: "text-teal-600", bg: "bg-teal-50" },
   nightlife: { icon: Moon, color: "text-indigo-600", bg: "bg-indigo-50" },
