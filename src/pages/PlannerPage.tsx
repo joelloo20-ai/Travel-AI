@@ -29,6 +29,7 @@ export function PlannerPage() {
       itinerary: chat.generatedItinerary,
       createdAt: new Date().toISOString(),
       status: "planning",
+      itinerarySource: chat.itinerarySource ?? undefined,
     };
     addTrip(trip);
     setSavedTripId(trip.id);
@@ -44,6 +45,8 @@ export function PlannerPage() {
         <ItineraryPreview
           destination={chat.draft.destination}
           itinerary={chat.generatedItinerary}
+          source={chat.itinerarySource}
+          generating={chat.step === "generating"}
           onSave={handleSave}
           saved={!!savedTripId}
         />

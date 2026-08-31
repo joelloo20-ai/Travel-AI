@@ -11,16 +11,24 @@ An AI-assistant-driven travel planner: chat with a planning assistant to build a
 
 ## Tech stack
 
-React + TypeScript + Vite, Tailwind CSS v4, Zustand (persisted to `localStorage`), React Router, Recharts, Lucide icons.
+**Frontend:** React + TypeScript + Vite, Tailwind CSS v4, Zustand (persisted to `localStorage`), React Router, Recharts, Lucide icons.
+
+**Backend:** a small Express server (`server/`) that holds the Anthropic API key and is the only thing that ever talks to Claude — the browser never sees the key.
 
 ## Itinerary generation
 
-`src/services/itineraryGenerator.ts` is a rule-based generator that fills a day-by-day plan from a destination-agnostic activity pool (`src/data/activityPool.ts`), scaled by pace, interests, and budget. It's intentionally isolated behind a single function so it can be swapped for a real LLM call (e.g. the Claude API) later without touching any UI code — the input/output shape already matches what a prompt-based generator would need.
+`POST /api/itinerary` (`server/index.ts` + `server/itineraryService.ts`) asks **Claude Opus 5** to plan a real, specific day-by-day itinerary — named neighborhoods, restaurants, and landmarks for the destination, not generic filler — and validates the response against a Zod schema (`server/itinerarySchema.ts`) via the SDK's structured-output support, so the result always matches the app's `ItineraryDay[]` shape.
+
+If `ANTHROPIC_API_KEY` isn't set, or a request to Claude fails for any reason, the server transparently falls back to `src/services/itineraryGenerator.ts` — a rule-based generator over a destination-agnostic activity pool (`src/data/activityPool.ts`) — so the app always returns an itinerary. Every response carries a `source: "ai" | "template"` flag; the UI shows an "AI-planned" badge when Claude generated the plan, and surfaces a plain-language note in chat when it fell back.
 
 ## Development
 
 ```bash
 npm install
-npm run dev      # start the dev server
-npm run build    # typecheck + production build
+cp .env.example .env   # then add your ANTHROPIC_API_KEY to get real AI-planned itineraries
+npm run dev             # runs the Vite dev server + Express API together
+npm run build            # typecheck + production build (frontend)
+npm start                # run the production server (serves the built frontend + API from one process)
 ```
+
+Without an `ANTHROPIC_API_KEY`, everything still works — itineraries just come from the built-in template generator instead of Claude.

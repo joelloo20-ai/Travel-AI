@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowRight, Sparkles } from "lucide-react";
+import { ArrowRight, Loader2, Sparkles } from "lucide-react";
 import { TEMPLATES } from "../data/templates";
-import { generateItinerary } from "../services/itineraryGenerator";
+import { requestItinerary } from "../services/itineraryClient";
 import { useTripStore } from "../store/useTripStore";
 import { newId } from "../utils/format";
 import type { ItineraryTemplate, Trip } from "../types";
@@ -18,36 +18,47 @@ export function TemplatesPage() {
   const navigate = useNavigate();
   const [activeTemplate, setActiveTemplate] = useState<ItineraryTemplate | null>(null);
   const [destination, setDestination] = useState("");
+  const [isBuilding, setIsBuilding] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const startFromTemplate = () => {
-    if (!activeTemplate || !destination.trim()) return;
+  const startFromTemplate = async () => {
+    if (!activeTemplate || !destination.trim() || isBuilding) return;
+    setIsBuilding(true);
+    setError(null);
     const budget = BUDGET_TIER_PER_DAY[activeTemplate.budgetTier] * activeTemplate.days * 2;
-    const itinerary = generateItinerary({
-      destination: destination.trim(),
-      days: activeTemplate.days,
-      pace: activeTemplate.pace,
-      interests: activeTemplate.interests,
-      startDate: null,
-      budget,
-      travelers: 2,
-    });
-    const trip: Trip = {
-      id: newId("trip"),
-      destination: destination.trim(),
-      coverImage: activeTemplate.coverImage,
-      startDate: null,
-      endDate: null,
-      travelers: 2,
-      budget,
-      pace: activeTemplate.pace,
-      interests: activeTemplate.interests,
-      itinerary,
-      createdAt: new Date().toISOString(),
-      templateId: activeTemplate.id,
-      status: "planning",
-    };
-    addTrip(trip);
-    navigate(`/trips/${trip.id}`);
+
+    try {
+      const { itinerary, source } = await requestItinerary({
+        destination: destination.trim(),
+        days: activeTemplate.days,
+        pace: activeTemplate.pace,
+        interests: activeTemplate.interests,
+        startDate: null,
+        budget,
+        travelers: 2,
+      });
+      const trip: Trip = {
+        id: newId("trip"),
+        destination: destination.trim(),
+        coverImage: activeTemplate.coverImage,
+        startDate: null,
+        endDate: null,
+        travelers: 2,
+        budget,
+        pace: activeTemplate.pace,
+        interests: activeTemplate.interests,
+        itinerary,
+        createdAt: new Date().toISOString(),
+        templateId: activeTemplate.id,
+        status: "planning",
+        itinerarySource: source,
+      };
+      addTrip(trip);
+      navigate(`/trips/${trip.id}`);
+    } catch {
+      setError("Couldn't reach the planning service. Please try again.");
+      setIsBuilding(false);
+    }
   };
 
   return (
@@ -61,7 +72,10 @@ export function TemplatesPage() {
         {TEMPLATES.map((tpl) => (
           <button
             key={tpl.id}
-            onClick={() => setActiveTemplate(tpl)}
+            onClick={() => {
+              setActiveTemplate(tpl);
+              setError(null);
+            }}
             className="group overflow-hidden rounded-2xl border border-ink-100 bg-white text-left shadow-soft transition-shadow hover:shadow-lift"
           >
             <div className="h-32 overflow-hidden">
@@ -109,21 +123,25 @@ export function TemplatesPage() {
               onChange={(e) => setDestination(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && startFromTemplate()}
               placeholder="e.g. Lisbon, Portugal"
-              className="mt-1.5 w-full rounded-lg border border-ink-100 bg-cream-50 px-3 py-2 text-sm text-ink-800 outline-none focus:border-coral-300"
+              disabled={isBuilding}
+              className="mt-1.5 w-full rounded-lg border border-ink-100 bg-cream-50 px-3 py-2 text-sm text-ink-800 outline-none focus:border-coral-300 disabled:opacity-60"
             />
+            {error && <p className="mt-2 text-xs text-coral-600">{error}</p>}
             <div className="mt-5 flex justify-end gap-2">
               <button
                 onClick={() => setActiveTemplate(null)}
-                className="rounded-full px-4 py-2 text-sm font-medium text-ink-500 hover:bg-ink-50"
+                disabled={isBuilding}
+                className="rounded-full px-4 py-2 text-sm font-medium text-ink-500 hover:bg-ink-50 disabled:opacity-50"
               >
                 Cancel
               </button>
               <button
                 onClick={startFromTemplate}
-                disabled={!destination.trim()}
-                className="rounded-full bg-coral-500 px-4 py-2 text-sm font-semibold text-white hover:opacity-90 disabled:opacity-40"
+                disabled={!destination.trim() || isBuilding}
+                className="flex items-center gap-1.5 rounded-full bg-coral-500 px-4 py-2 text-sm font-semibold text-white hover:opacity-90 disabled:opacity-40"
               >
-                Build itinerary
+                {isBuilding && <Loader2 size={14} className="animate-spin" />}
+                {isBuilding ? "Planning..." : "Build itinerary"}
               </button>
             </div>
           </div>

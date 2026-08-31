@@ -1,4 +1,4 @@
-import { Compass, MapPin } from "lucide-react";
+import { Compass, MapPin, Sparkles } from "lucide-react";
 import { DayCard } from "./DayCard";
 import { estimateTripCost } from "../../services/itineraryGenerator";
 import { formatCurrency } from "../../utils/format";
@@ -7,14 +7,32 @@ import type { ItineraryDay } from "../../types";
 export function ItineraryPreview({
   destination,
   itinerary,
+  source,
+  generating,
   onSave,
   saved,
 }: {
   destination: string;
   itinerary: ItineraryDay[] | null;
+  source?: "ai" | "template" | null;
+  generating?: boolean;
   onSave: () => void;
   saved: boolean;
 }) {
+  if (generating) {
+    return (
+      <div className="flex h-full flex-col items-center justify-center gap-3 px-8 text-center">
+        <span className="flex h-14 w-14 animate-pulse items-center justify-center rounded-2xl bg-coral-50 text-coral-500">
+          <Sparkles size={24} />
+        </span>
+        <h3 className="font-display text-xl font-medium text-ink-800">Planning {destination}...</h3>
+        <p className="max-w-xs text-sm text-ink-400">
+          Claude is working out real places and pacing for your trip — this can take a few seconds.
+        </p>
+      </div>
+    );
+  }
+
   if (!itinerary) {
     return (
       <div className="flex h-full flex-col items-center justify-center gap-3 px-8 text-center">
@@ -36,7 +54,15 @@ export function ItineraryPreview({
       <div className="border-b border-ink-100 bg-white/70 px-5 py-4">
         <div className="flex items-center justify-between gap-3">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-wide text-coral-600">Draft itinerary</p>
+            <div className="flex items-center gap-2">
+              <p className="text-xs font-semibold uppercase tracking-wide text-coral-600">Draft itinerary</p>
+              {source === "ai" && (
+                <span className="flex items-center gap-1 rounded-full bg-teal-500/10 px-2 py-0.5 text-[11px] font-semibold text-teal-600">
+                  <Sparkles size={10} />
+                  AI-planned
+                </span>
+              )}
+            </div>
             <h2 className="font-display text-xl font-medium text-ink-900">{destination}</h2>
             <p className="text-xs text-ink-400">
               {itinerary.length} days · est. {formatCurrency(total)} total
