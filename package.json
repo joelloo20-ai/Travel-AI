@@ -12,6 +12,9 @@
     "lint": "oxlint",
     "preview": "vite preview"
   },
+  "engines": {
+    "node": ">=20.19.0"
+  },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.122.0",
     "clsx": "^2.1.1",
@@ -22,6 +25,7 @@
     "react-dom": "^19.2.8",
     "react-router-dom": "^7.18.3",
     "recharts": "^3.10.1",
+    "tsx": "^4.23.13",
     "zod": "^4.5.4",
     "zustand": "^5.0.15"
   },
@@ -37,7 +41,6 @@
     "oxlint": "^1.79.0",
     "postcss": "^8.5.26",
     "tailwindcss": "^4.3.3",
-    "tsx": "^4.23.13",
     "typescript": "~6.0.2",
     "vite": "^8.2.2"
   }
