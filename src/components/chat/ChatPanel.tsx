@@ -40,7 +40,7 @@ export function ChatPanel({ chat }: { chat: ReturnType<typeof usePlannerChat> })
       </div>
 
       <div className="border-t border-ink-100/70 bg-white/70 p-3 backdrop-blur-sm sm:p-4">
-        <div className="flex items-center gap-2 rounded-full border border-ink-100 bg-white px-2 py-1.5 shadow-soft focus-within:border-coral-300">
+        <div className="flex items-center gap-2 rounded-full border border-ink-100 bg-white px-2 py-1.5 shadow-soft transition-colors focus-within:border-blue-300 focus-within:shadow-glow">
           <input
             value={input}
             onChange={(e) => setInput(e.target.value)}
@@ -52,7 +52,7 @@ export function ChatPanel({ chat }: { chat: ReturnType<typeof usePlannerChat> })
             onClick={handleSend}
             disabled={!input.trim()}
             aria-label="Send message"
-            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-coral-500 text-white transition-opacity disabled:opacity-30"
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-blue-400 to-blue-600 text-white shadow-glow transition-all hover:brightness-110 disabled:opacity-30 disabled:shadow-none disabled:hover:brightness-100"
           >
             <ArrowUp size={16} strokeWidth={2.5} />
           </button>
