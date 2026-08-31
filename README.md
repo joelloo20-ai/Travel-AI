@@ -4,7 +4,7 @@ An AI-assistant-driven travel planner: chat with a planning assistant to build a
 
 ## Features
 
-- **Conversational planner** (`/`) — a chat assistant asks about destination, trip length, travelers, interests, and budget, then builds a full day-by-day itinerary live in the panel next to the chat.
+- **Conversational planner** (`/`) — a chat assistant asks about destination, trip length, travelers, interests, and budget, then builds a full day-by-day itinerary live in the panel next to the chat. You can also upload a plane ticket or itinerary (photo or PDF) straight into the chat and Claude pulls out the destination, dates, and traveler count to jump-start the questions.
 - **Popular Destinations** (`/templates`) — hand-crafted, specific 4-6 day itineraries for Taipei, Tokyo & Kyoto, Bangkok, and Seoul (real named neighborhoods, temples, and markets), ready to start instantly.
 - **Templates** (`/templates`) — pick a ready-made trip shape (City Explorer, Beach Relaxation, Backpacker Adventure, Romantic Getaway, Family Fun, Foodie Trail) and drop in your destination to generate an itinerary instantly.
 - **My Trips** (`/trips`) — every saved trip as a card with dates, travelers, and estimated cost. Pull down to refresh on touch devices.
@@ -23,6 +23,10 @@ An AI-assistant-driven travel planner: chat with a planning assistant to build a
 `POST /api/itinerary` (`server/index.ts` + `server/itineraryService.ts`) asks **Claude Sonnet 5** to plan a real, specific day-by-day itinerary — named neighborhoods, restaurants, and landmarks for the destination, not generic filler — and validates the response against a Zod schema (`server/itinerarySchema.ts`) via the SDK's structured-output support, so the result always matches the app's `ItineraryDay[]` shape.
 
 If `ANTHROPIC_API_KEY` isn't set, or a request to Claude fails for any reason, the server transparently falls back to `src/services/itineraryGenerator.ts` — a rule-based generator over a destination-agnostic activity pool (`src/data/activityPool.ts`) — so the app always returns an itinerary. Every response carries a `source: "ai" | "template"` flag; the UI shows an "AI-planned" badge when Claude generated the plan, and surfaces a plain-language note in chat when it fell back.
+
+## Travel document upload
+
+`POST /api/parse-travel-document` (`server/travelDocumentService.ts`) lets you attach a plane ticket, boarding pass, hotel confirmation, or itinerary (image or PDF) from the paperclip button in the planner chat. Claude reads it as a vision/document input and returns structured JSON (document type, destination, start/end dates, traveler count) via the same Zod structured-output pattern as itinerary generation (`server/travelDocumentSchema.ts`). The assistant summarizes what it found and, if you confirm, fills in the draft and skips straight to whichever question — duration, travelers, interests — still needs an answer. Images are downscaled in the browser first (`src/utils/compressImage.ts`); PDFs are sent as-is, since Claude reads them natively. Without `ANTHROPIC_API_KEY`, or if a scan fails, the assistant says so in chat and you can keep going with the regular question flow.
 
 ## Receipt scanning
 

@@ -5,6 +5,7 @@ import express from "express";
 import { z } from "zod";
 import { buildItinerary } from "./itineraryService";
 import { parseReceiptImage } from "./receiptService";
+import { parseTravelDocument } from "./travelDocumentService";
 import { appendExpenseRow, sheetsConfigured } from "./sheetsService";
 import type { InterestTag, TripPace } from "../src/types";
 
@@ -56,6 +57,21 @@ app.post("/api/parse-receipt", async (req, res) => {
     return;
   }
   const result = await parseReceiptImage(parsed.data.imageBase64, parsed.data.mediaType);
+  res.json(result);
+});
+
+const TravelDocumentRequestSchema = z.object({
+  fileBase64: z.string().min(1),
+  mediaType: z.string().min(1),
+});
+
+app.post("/api/parse-travel-document", async (req, res) => {
+  const parsed = TravelDocumentRequestSchema.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: "Invalid request" });
+    return;
+  }
+  const result = await parseTravelDocument(parsed.data.fileBase64, parsed.data.mediaType);
   res.json(result);
 });
 

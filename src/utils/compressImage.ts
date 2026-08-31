@@ -30,3 +30,20 @@ export function compressImage(file: File, maxWidth = 1000, quality = 0.75): Prom
 export function makeThumbnail(file: File): Promise<string> {
   return compressImage(file, 320, 0.6).then((r) => r.dataUrl);
 }
+
+function readFileAsDataUrl(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error("Could not read file"));
+    reader.onload = () => resolve(reader.result as string);
+    reader.readAsDataURL(file);
+  });
+}
+
+/** Images are downscaled like a receipt photo; PDFs are read as-is since Claude reads them natively. */
+export function readUploadedDocument(file: File): Promise<{ dataUrl: string; mediaType: string }> {
+  if (file.type === "application/pdf") {
+    return readFileAsDataUrl(file).then((dataUrl) => ({ dataUrl, mediaType: "application/pdf" }));
+  }
+  return compressImage(file);
+}

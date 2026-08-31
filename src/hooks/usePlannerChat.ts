@@ -1,5 +1,7 @@
 import { useCallback, useRef, useState } from "react";
 import { requestItinerary } from "../services/itineraryClient";
+import { parseTravelDocument, type ParsedTravelDocument } from "../services/travelDocumentClient";
+import { readUploadedDocument } from "../utils/compressImage";
 import type { ChatMessage, InterestTag, ItineraryDay, TripPace } from "../types";
 
 type Step =
@@ -69,10 +71,17 @@ function makeMessage(role: ChatMessage["role"], text: string, quickReplies?: str
   };
 }
 
-const INITIAL_MESSAGE = makeMessage(
-  "assistant",
-  "Hi! I'm your Wayfare planning assistant. Tell me where you're headed and I'll put together a day-by-day itinerary with you. Where do you want to go?"
-);
+interface StepPrompt {
+  text: string;
+  quickReplies?: string[];
+  multiSelect?: boolean;
+}
+
+const INITIAL_PROMPT: StepPrompt = {
+  text: "Hi! I'm your Wayfare planning assistant. Tell me where you're headed and I'll put together a day-by-day itinerary with you. Where do you want to go?",
+};
+
+const INITIAL_MESSAGE = makeMessage("assistant", INITIAL_PROMPT.text);
 
 export function usePlannerChat() {
   const [messages, setMessages] = useState<ChatMessage[]>([INITIAL_MESSAGE]);
@@ -89,6 +98,10 @@ export function usePlannerChat() {
     budget: 0,
     pace: "balanced",
   });
+  // Remembers the most recent step-defining question, so we can re-ask it if the
+  // user declines to use details extracted from an uploaded document.
+  const lastStepPromptRef = useRef<StepPrompt>(INITIAL_PROMPT);
+  const pendingExtractionRef = useRef<ParsedTravelDocument | null>(null);
 
   const pushAssistant = useCallback((text: string, quickReplies?: string[], multiSelect?: boolean, delayMs = 500) => {
     setIsTyping(true);
@@ -97,6 +110,16 @@ export function usePlannerChat() {
       setMessages((prev) => [...prev, makeMessage("assistant", text, quickReplies, multiSelect)]);
     }, delayMs);
   }, []);
+
+  // Like pushAssistant, but also remembers the prompt as the "current step question"
+  // so it can be replayed if the user backs out of a document-extraction confirmation.
+  const pushAssistantStep = useCallback(
+    (text: string, quickReplies?: string[], multiSelect?: boolean, delayMs = 500) => {
+      lastStepPromptRef.current = { text, quickReplies, multiSelect };
+      pushAssistant(text, quickReplies, multiSelect, delayMs);
+    },
+    [pushAssistant]
+  );
 
   const pushUser = useCallback((text: string) => {
     setMessages((prev) => [...prev, makeMessage("user", text)]);
@@ -140,6 +163,52 @@ export function usePlannerChat() {
     }
   }, []);
 
+  // Folds details pulled from an uploaded document into the draft, then jumps
+  // straight to whichever step still needs an answer.
+  const applyExtractionAndAdvance = useCallback(() => {
+    const parsed = pendingExtractionRef.current;
+    pendingExtractionRef.current = null;
+    if (!parsed) return;
+
+    const d = draftRef.current;
+    if (parsed.destination) d.destination = parsed.destination;
+    if (parsed.startDate) d.startDate = parsed.startDate;
+
+    let gotDuration = false;
+    if (parsed.startDate && parsed.endDate) {
+      const start = new Date(parsed.startDate);
+      const end = new Date(parsed.endDate);
+      const diffDays = Math.round((end.getTime() - start.getTime()) / 86_400_000) + 1;
+      if (diffDays > 0) {
+        d.days = diffDays;
+        gotDuration = true;
+      }
+    }
+    if (parsed.travelers) d.travelers = parsed.travelers;
+
+    if (!d.destination) {
+      setStep("destination");
+      pushAssistantStep("No problem — where are you headed?");
+      return;
+    }
+    if (!gotDuration) {
+      setStep("duration");
+      pushAssistantStep(`Got it, ${d.destination} it is. How long is the trip?`, DURATION_OPTIONS.map((o) => o.label));
+      return;
+    }
+    if (!parsed.travelers) {
+      setStep("travelers");
+      pushAssistantStep("Who's traveling?", TRAVELER_OPTIONS.map((o) => o.label));
+      return;
+    }
+    setStep("interests");
+    pushAssistantStep(
+      "What do you want more of on this trip? Pick as many as you like, then hit Continue.",
+      INTEREST_OPTIONS.map((o) => o.label),
+      true
+    );
+  }, [pushAssistantStep]);
+
   const submitFreeText = useCallback(
     (text: string) => {
       const trimmed = text.trim();
@@ -149,7 +218,7 @@ export function usePlannerChat() {
       if (step === "destination") {
         draftRef.current.destination = trimmed;
         setStep("duration");
-        pushAssistant(`${trimmed} is a great choice. How long is the trip?`, DURATION_OPTIONS.map((o) => o.label));
+        pushAssistantStep(`${trimmed} is a great choice. How long is the trip?`, DURATION_OPTIONS.map((o) => o.label));
         return;
       }
 
@@ -157,14 +226,14 @@ export function usePlannerChat() {
         const parsed = Number(trimmed.replace(/[^0-9.]/g, ""));
         draftRef.current.budget = Number.isFinite(parsed) && parsed > 0 ? parsed : draftRef.current.budget;
         setStep("pace");
-        pushAssistant("Got it. Last thing — how packed do you want each day to be?", PACE_OPTIONS.map((o) => o.label));
+        pushAssistantStep("Got it. Last thing — how packed do you want each day to be?", PACE_OPTIONS.map((o) => o.label));
         return;
       }
 
       // Free text fallback for any other step just re-prompts.
       pushAssistant("Got it — you can also tap one of the options below.");
     },
-    [step, pushAssistant, pushUser]
+    [step, pushAssistant, pushAssistantStep, pushUser]
   );
 
   const submitQuickReply = useCallback(
@@ -176,11 +245,24 @@ export function usePlannerChat() {
         return;
       }
 
+      if (label === "Use these details") {
+        applyExtractionAndAdvance();
+        return;
+      }
+
+      if (label === "Start fresh instead") {
+        pendingExtractionRef.current = null;
+        const prompt = lastStepPromptRef.current;
+        pushAssistant("No worries — let's pick up where we left off.", undefined, false, 300);
+        window.setTimeout(() => pushAssistant(prompt.text, prompt.quickReplies, prompt.multiSelect), 350);
+        return;
+      }
+
       if (step === "duration") {
         const match = DURATION_OPTIONS.find((o) => o.label === label);
         draftRef.current.days = match?.days ?? 5;
         setStep("travelers");
-        pushAssistant("Who's traveling?", TRAVELER_OPTIONS.map((o) => o.label));
+        pushAssistantStep("Who's traveling?", TRAVELER_OPTIONS.map((o) => o.label));
         return;
       }
 
@@ -188,7 +270,7 @@ export function usePlannerChat() {
         const match = TRAVELER_OPTIONS.find((o) => o.label === label);
         draftRef.current.travelers = match?.count ?? 1;
         setStep("interests");
-        pushAssistant(
+        pushAssistantStep(
           "What do you want more of on this trip? Pick as many as you like, then hit Continue.",
           INTEREST_OPTIONS.map((o) => o.label),
           true
@@ -201,7 +283,7 @@ export function usePlannerChat() {
         const perDay = match?.amountPerDay ?? 160;
         draftRef.current.budget = perDay * draftRef.current.days * draftRef.current.travelers;
         setStep("pace");
-        pushAssistant("Got it. Last thing — how packed do you want each day to be?", PACE_OPTIONS.map((o) => o.label));
+        pushAssistantStep("Got it. Last thing — how packed do you want each day to be?", PACE_OPTIONS.map((o) => o.label));
         return;
       }
 
@@ -213,7 +295,7 @@ export function usePlannerChat() {
         return;
       }
     },
-    [step, pushAssistant, pushUser, runGeneration]
+    [step, pushAssistant, pushAssistantStep, pushUser, runGeneration, applyExtractionAndAdvance]
   );
 
   const submitMultiSelect = useCallback(
@@ -222,9 +304,42 @@ export function usePlannerChat() {
       const selected = INTEREST_OPTIONS.filter((o) => labels.includes(o.label)).map((o) => o.value);
       draftRef.current.interests = selected.length ? selected : ["culture", "food"];
       setStep("budget");
-      pushAssistant("What's your budget vibe for this trip?", BUDGET_OPTIONS.map((o) => o.label));
+      pushAssistantStep("What's your budget vibe for this trip?", BUDGET_OPTIONS.map((o) => o.label));
     },
-    [pushAssistant, pushUser]
+    [pushAssistantStep, pushUser]
+  );
+
+  const uploadDocument = useCallback(
+    async (file: File) => {
+      pushUser(`📎 ${file.name}`);
+      setIsTyping(true);
+      try {
+        const { dataUrl, mediaType } = await readUploadedDocument(file);
+        const { parsed, error } = await parseTravelDocument(dataUrl, mediaType);
+        setIsTyping(false);
+
+        if (!parsed) {
+          setMessages((prev) => [
+            ...prev,
+            makeMessage("assistant", error ?? "I couldn't read that file — mind trying a clearer photo or a different file?"),
+          ]);
+          return;
+        }
+
+        pendingExtractionRef.current = parsed;
+        setMessages((prev) => [
+          ...prev,
+          makeMessage("assistant", `${parsed.summary} Want me to use these details to start planning?`, [
+            "Use these details",
+            "Start fresh instead",
+          ]),
+        ]);
+      } catch {
+        setIsTyping(false);
+        setMessages((prev) => [...prev, makeMessage("assistant", "Something went wrong reading that file — mind trying again?")]);
+      }
+    },
+    [pushUser]
   );
 
   return {
@@ -238,5 +353,6 @@ export function usePlannerChat() {
     submitFreeText,
     submitQuickReply,
     submitMultiSelect,
+    uploadDocument,
   };
 }
