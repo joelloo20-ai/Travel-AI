@@ -5,7 +5,7 @@ import express from "express";
 import { z } from "zod";
 import { buildItinerary } from "./itineraryService";
 import { parseReceiptImage } from "./receiptService";
-import { parseTravelDocument } from "./travelDocumentService";
+import { parseTravelDocuments } from "./travelDocumentService";
 import { appendExpenseRow, sheetsConfigured } from "./sheetsService";
 import type { InterestTag, TripPace } from "../src/types";
 
@@ -13,7 +13,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PORT = Number(process.env.PORT) || 8787;
 
 const app = express();
-app.use(express.json({ limit: "10mb" }));
+app.use(express.json({ limit: "25mb" }));
 
 const INTEREST_TAGS = ["food", "culture", "nature", "nightlife", "shopping", "adventure", "relaxation", "family"] as const;
 const PACES = ["relaxed", "balanced", "packed"] as const;
@@ -61,8 +61,15 @@ app.post("/api/parse-receipt", async (req, res) => {
 });
 
 const TravelDocumentRequestSchema = z.object({
-  fileBase64: z.string().min(1),
-  mediaType: z.string().min(1),
+  files: z
+    .array(
+      z.object({
+        fileBase64: z.string().min(1),
+        mediaType: z.string().min(1),
+      })
+    )
+    .min(1)
+    .max(6),
 });
 
 app.post("/api/parse-travel-document", async (req, res) => {
@@ -71,7 +78,9 @@ app.post("/api/parse-travel-document", async (req, res) => {
     res.status(400).json({ error: "Invalid request" });
     return;
   }
-  const result = await parseTravelDocument(parsed.data.fileBase64, parsed.data.mediaType);
+  const result = await parseTravelDocuments(
+    parsed.data.files.map((f) => ({ base64: f.fileBase64, mediaType: f.mediaType }))
+  );
   res.json(result);
 });
 

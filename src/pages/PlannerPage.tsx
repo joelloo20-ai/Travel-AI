@@ -5,12 +5,13 @@ import { ItineraryPreview } from "../components/itinerary/ItineraryPreview";
 import { usePlannerChat } from "../hooks/usePlannerChat";
 import { useTripStore } from "../store/useTripStore";
 import { pickCoverImage } from "../data/coverImages";
-import { newId } from "../utils/format";
+import { newId, todayIso } from "../utils/format";
 import type { Trip } from "../types";
 
 export function PlannerPage() {
   const chat = usePlannerChat();
   const addTrip = useTripStore((s) => s.addTrip);
+  const addExpense = useTripStore((s) => s.addExpense);
   const navigate = useNavigate();
   const [savedTripId, setSavedTripId] = useState<string | null>(null);
 
@@ -32,6 +33,18 @@ export function PlannerPage() {
       itinerarySource: chat.itinerarySource ?? undefined,
     };
     addTrip(trip);
+    if (chat.pendingExpense) {
+      addExpense({
+        id: newId("exp"),
+        tripId: trip.id,
+        category: chat.pendingExpense.category,
+        label: chat.pendingExpense.label,
+        amount: chat.pendingExpense.amount,
+        currency: chat.pendingExpense.currency,
+        date: trip.startDate ?? todayIso(),
+        note: "Pulled from an uploaded travel document",
+      });
+    }
     setSavedTripId(trip.id);
     window.setTimeout(() => navigate(`/trips/${trip.id}`), 700);
   };

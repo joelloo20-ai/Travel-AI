@@ -5,7 +5,7 @@ import { QuickReplies } from "./QuickReplies";
 import type { usePlannerChat } from "../../hooks/usePlannerChat";
 
 export function ChatPanel({ chat }: { chat: ReturnType<typeof usePlannerChat> }) {
-  const { messages, isTyping, submitFreeText, submitQuickReply, submitMultiSelect, uploadDocument } = chat;
+  const { messages, isTyping, submitFreeText, submitQuickReply, submitMultiSelect, uploadDocuments } = chat;
   const [input, setInput] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -21,9 +21,10 @@ export function ChatPanel({ chat }: { chat: ReturnType<typeof usePlannerChat> })
     setInput("");
   };
 
-  const handleFile = (file: File | null) => {
-    if (!file) return;
-    uploadDocument(file);
+  const handleFiles = (fileList: FileList | null) => {
+    const files = Array.from(fileList ?? []);
+    if (!files.length) return;
+    uploadDocuments(files);
   };
 
   return (
@@ -51,16 +52,17 @@ export function ChatPanel({ chat }: { chat: ReturnType<typeof usePlannerChat> })
             ref={fileInputRef}
             type="file"
             accept="image/*,application/pdf"
+            multiple
             className="hidden"
             onChange={(e) => {
-              handleFile(e.target.files?.[0] ?? null);
+              handleFiles(e.target.files);
               e.target.value = "";
             }}
           />
           <button
             onClick={() => fileInputRef.current?.click()}
-            aria-label="Upload a ticket or itinerary"
-            title="Upload a ticket or itinerary"
+            aria-label="Upload tickets or an itinerary"
+            title="Upload tickets or an itinerary"
             className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-ink-400 transition-colors hover:bg-ink-50 hover:text-ink-600"
           >
             <Paperclip size={16} />
@@ -82,7 +84,7 @@ export function ChatPanel({ chat }: { chat: ReturnType<typeof usePlannerChat> })
           </button>
         </div>
         <p className="mt-1.5 px-2 text-center text-[11px] text-ink-300">
-          Tip: upload a plane ticket or itinerary and I'll pull the details out for you.
+          Tip: upload a plane ticket, hotel booking, or itinerary — even a few at once — and I'll pull the details out for you.
         </p>
       </div>
     </div>

@@ -1,8 +1,16 @@
 import { useCallback, useRef, useState } from "react";
 import { requestItinerary } from "../services/itineraryClient";
-import { parseTravelDocument, type ParsedTravelDocument } from "../services/travelDocumentClient";
+import { parseTravelDocuments, type ParsedTravelDocument } from "../services/travelDocumentClient";
 import { readUploadedDocument } from "../utils/compressImage";
-import type { ChatMessage, InterestTag, ItineraryDay, TripPace } from "../types";
+import { formatCurrency } from "../utils/format";
+import type { ChatMessage, ExpenseCategory, InterestTag, ItineraryDay, TripPace } from "../types";
+
+export interface PendingExpense {
+  amount: number;
+  currency: string;
+  category: ExpenseCategory;
+  label: string;
+}
 
 type Step =
   | "destination"
@@ -60,6 +68,8 @@ const PACE_OPTIONS: { label: string; value: TripPace }[] = [
   { label: "Packed — see everything", value: "packed" },
 ];
 
+const MAX_UPLOAD_FILES = 6;
+
 function makeMessage(role: ChatMessage["role"], text: string, quickReplies?: string[], multiSelect?: boolean): ChatMessage {
   return {
     id: `msg-${Math.random().toString(36).slice(2, 10)}`,
@@ -83,12 +93,36 @@ const INITIAL_PROMPT: StepPrompt = {
 
 const INITIAL_MESSAGE = makeMessage("assistant", INITIAL_PROMPT.text);
 
+// Builds a deterministic recap from the structured fields (flight legs, total price) rather
+// than trusting Claude's freeform summary alone to mention them.
+function formatExtractionRecap(parsed: ParsedTravelDocument): string {
+  const lines = [parsed.summary];
+
+  if (parsed.flights.length) {
+    const legs = parsed.flights.map((f) => {
+      const carrier = [f.airline, f.flightNumber].filter(Boolean).join(" ") || "Flight";
+      const route = [f.departureAirport, f.arrivalAirport].filter(Boolean).join(" → ");
+      const time = f.departureTime ? ` — ${f.departureTime}` : "";
+      return `• ${carrier}${route ? ` (${route})` : ""}${time}`;
+    });
+    lines.push(legs.join("\n"));
+  }
+
+  if (parsed.totalCost != null) {
+    lines.push(`Total: ${formatCurrency(parsed.totalCost, parsed.currency ?? "USD")}`);
+  }
+
+  lines.push("Want me to use these details to start planning?");
+  return lines.join("\n\n");
+}
+
 export function usePlannerChat() {
   const [messages, setMessages] = useState<ChatMessage[]>([INITIAL_MESSAGE]);
   const [step, setStep] = useState<Step>("destination");
   const [isTyping, setIsTyping] = useState(false);
   const [generatedItinerary, setGeneratedItinerary] = useState<ItineraryDay[] | null>(null);
   const [itinerarySource, setItinerarySource] = useState<"ai" | "template" | null>(null);
+  const [pendingExpense, setPendingExpense] = useState<PendingExpense | null>(null);
   const draftRef = useRef<Draft>({
     destination: "",
     days: 5,
@@ -185,6 +219,20 @@ export function usePlannerChat() {
       }
     }
     if (parsed.travelers) d.travelers = parsed.travelers;
+
+    if (parsed.totalCost != null) {
+      const label = parsed.flights.length
+        ? [parsed.flights[0].airline, parsed.flights[0].flightNumber].filter(Boolean).join(" ") || "Flight booking"
+        : parsed.documentType === "hotel"
+          ? "Hotel booking"
+          : "Trip booking";
+      setPendingExpense({
+        amount: parsed.totalCost,
+        currency: parsed.currency ?? "USD",
+        category: parsed.flights.length ? "flights" : parsed.documentType === "hotel" ? "lodging" : "other",
+        label,
+      });
+    }
 
     if (!d.destination) {
       setStep("destination");
@@ -309,19 +357,21 @@ export function usePlannerChat() {
     [pushAssistantStep, pushUser]
   );
 
-  const uploadDocument = useCallback(
-    async (file: File) => {
-      pushUser(`📎 ${file.name}`);
+  const uploadDocuments = useCallback(
+    async (files: File[]) => {
+      if (!files.length) return;
+      const capped = files.slice(0, MAX_UPLOAD_FILES);
+      pushUser(`📎 ${capped.map((f) => f.name).join(", ")}`);
       setIsTyping(true);
       try {
-        const { dataUrl, mediaType } = await readUploadedDocument(file);
-        const { parsed, error } = await parseTravelDocument(dataUrl, mediaType);
+        const uploaded = await Promise.all(capped.map(readUploadedDocument));
+        const { parsed, error } = await parseTravelDocuments(uploaded);
         setIsTyping(false);
 
         if (!parsed) {
           setMessages((prev) => [
             ...prev,
-            makeMessage("assistant", error ?? "I couldn't read that file — mind trying a clearer photo or a different file?"),
+            makeMessage("assistant", error ?? "I couldn't read those files — mind trying clearer photos or different files?"),
           ]);
           return;
         }
@@ -329,14 +379,11 @@ export function usePlannerChat() {
         pendingExtractionRef.current = parsed;
         setMessages((prev) => [
           ...prev,
-          makeMessage("assistant", `${parsed.summary} Want me to use these details to start planning?`, [
-            "Use these details",
-            "Start fresh instead",
-          ]),
+          makeMessage("assistant", formatExtractionRecap(parsed), ["Use these details", "Start fresh instead"]),
         ]);
       } catch {
         setIsTyping(false);
-        setMessages((prev) => [...prev, makeMessage("assistant", "Something went wrong reading that file — mind trying again?")]);
+        setMessages((prev) => [...prev, makeMessage("assistant", "Something went wrong reading those files — mind trying again?")]);
       }
     },
     [pushUser]
@@ -348,11 +395,12 @@ export function usePlannerChat() {
     isTyping,
     generatedItinerary,
     itinerarySource,
+    pendingExpense,
     draft: draftRef.current,
     interestOptions: INTEREST_OPTIONS,
     submitFreeText,
     submitQuickReply,
     submitMultiSelect,
-    uploadDocument,
+    uploadDocuments,
   };
 }
