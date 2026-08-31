@@ -4,33 +4,35 @@
   --font-sans: "Inter", system-ui, "Segoe UI", Roboto, sans-serif;
   --font-display: "Fraunces", Georgia, serif;
 
-  --color-cream-50: #fffcf7;
-  --color-cream-100: #fef8ee;
-  --color-cream-200: #fbecd9;
+  --color-cream-50: #f8faff;
+  --color-cream-100: #eef2fb;
+  --color-cream-200: #e2e8f7;
 
-  --color-coral-50: #fff3ee;
-  --color-coral-100: #ffe1d3;
-  --color-coral-200: #ffc0a3;
-  --color-coral-300: #ff9a6e;
-  --color-coral-400: #ff7a4d;
-  --color-coral-500: #fc5a2e;
-  --color-coral-600: #e8451c;
-  --color-coral-700: #c23515;
+  --color-blue-50: #eef3ff;
+  --color-blue-100: #dde7fe;
+  --color-blue-200: #b8cdfc;
+  --color-blue-300: #86a9f8;
+  --color-blue-400: #567ff1;
+  --color-blue-500: #3562e9;
+  --color-blue-600: #2749c4;
+  --color-blue-700: #1d3897;
+  --color-blue-800: #17296b;
 
-  --color-ink-50: #f4f5f7;
-  --color-ink-100: #e4e6ec;
+  --color-ink-50: #f4f5f8;
+  --color-ink-100: #e4e6ed;
   --color-ink-400: #6b7180;
   --color-ink-500: #4b5063;
   --color-ink-600: #383c4d;
-  --color-ink-700: #262939;
-  --color-ink-800: #1a1c27;
-  --color-ink-900: #10111a;
+  --color-ink-700: #23263a;
+  --color-ink-800: #151827;
+  --color-ink-900: #0a0b14;
 
   --color-teal-500: #1c8c85;
   --color-teal-600: #157069;
 
-  --shadow-soft: 0 1px 2px rgba(16, 17, 26, 0.04), 0 8px 24px -8px rgba(16, 17, 26, 0.12);
-  --shadow-lift: 0 4px 8px rgba(16, 17, 26, 0.04), 0 16px 40px -12px rgba(16, 17, 26, 0.18);
+  --shadow-soft: 0 1px 2px rgba(10, 20, 50, 0.05), 0 8px 24px -8px rgba(21, 40, 90, 0.14);
+  --shadow-lift: 0 6px 16px -4px rgba(21, 40, 90, 0.12), 0 20px 48px -16px rgba(21, 40, 90, 0.24);
+  --shadow-glow: 0 8px 20px -6px rgba(53, 98, 233, 0.45);
 }
 
 html {
@@ -40,9 +42,22 @@ html {
 body {
   margin: 0;
   font-family: var(--font-sans);
-  background: var(--color-cream-50);
+  background:
+    radial-gradient(1100px 480px at 12% -12%, color-mix(in srgb, var(--color-blue-100) 55%, transparent), transparent 60%),
+    var(--color-cream-50);
+  background-attachment: fixed;
   color: var(--color-ink-800);
   -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background: var(--color-blue-200);
+  color: var(--color-ink-900);
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-blue-400);
+  outline-offset: 2px;
 }
 
 #root {
@@ -63,6 +78,7 @@ body {
 
 .font-display {
   font-family: var(--font-display);
+  letter-spacing: -0.012em;
 }
 
 @keyframes fade-up {
