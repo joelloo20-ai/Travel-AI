@@ -30,7 +30,7 @@ export function ExpenseList({ expenses, onRemove }: { expenses: Expense[]; onRem
             <button
               onClick={() => onRemove(expense.id)}
               aria-label="Remove expense"
-              className="rounded-full p-1.5 text-ink-300 opacity-0 transition-opacity hover:bg-ink-50 hover:text-coral-600 group-hover:opacity-100"
+              className="rounded-full p-1.5 text-ink-300 opacity-0 transition-opacity hover:bg-rose-50 hover:text-rose-600 group-hover:opacity-100"
             >
               <Trash2 size={14} />
             </button>
