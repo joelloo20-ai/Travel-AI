@@ -7,7 +7,7 @@ export function MessageBubble({ message }: { message: ChatMessage }) {
   return (
     <div className={clsx("flex animate-fade-up items-start gap-2.5", !isAssistant && "flex-row-reverse")}>
       {isAssistant && (
-        <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-coral-500 text-white">
+        <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-blue-500 text-white">
           <Compass size={13} strokeWidth={2.5} />
         </span>
       )}
@@ -26,7 +26,7 @@ export function MessageBubble({ message }: { message: ChatMessage }) {
 export function TypingBubble() {
   return (
     <div className="flex animate-fade-up items-center gap-2.5">
-      <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-coral-500 text-white">
+      <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-blue-500 text-white">
         <Compass size={13} strokeWidth={2.5} />
       </span>
       <div className="flex items-center gap-1 rounded-2xl rounded-tl-sm bg-white px-4 py-3 shadow-soft">

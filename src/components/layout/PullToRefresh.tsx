@@ -66,7 +66,7 @@ export function PullToRefresh({ onRefresh, children }: { onRefresh: () => Promis
       <motion.div
         animate={controls}
         style={{ height: indicatorHeight }}
-        className="flex items-center justify-center overflow-hidden text-coral-500"
+        className="flex items-center justify-center overflow-hidden text-blue-500"
       >
         <RefreshCw
           size={20}

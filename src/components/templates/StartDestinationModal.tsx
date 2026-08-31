@@ -52,7 +52,7 @@ export function StartDestinationModal({
                 type="date"
                 value={startDate}
                 onChange={(e) => setStartDate(e.target.value)}
-                className="mt-1.5 w-full rounded-lg border border-ink-100 bg-cream-50 px-3 py-2 text-sm text-ink-800 outline-none focus:border-coral-300"
+                className="mt-1.5 w-full rounded-lg border border-ink-100 bg-cream-50 px-3 py-2 text-sm text-ink-800 outline-none focus:border-blue-300"
               />
 
               <label className="mt-4 block text-sm font-medium text-ink-700">Travelers</label>
@@ -78,7 +78,7 @@ export function StartDestinationModal({
                 </button>
                 <button
                   onClick={() => onConfirm({ startDate: startDate || null, travelers })}
-                  className="rounded-full bg-coral-500 px-4 py-2 text-sm font-semibold text-white hover:opacity-90"
+                  className="rounded-full bg-gradient-to-b from-blue-500 to-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-glow transition-all hover:brightness-110"
                 >
                   Start trip
                 </button>

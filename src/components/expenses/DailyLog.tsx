@@ -30,7 +30,7 @@ function DayLogCard({
     >
       <div className="mb-3 flex items-baseline justify-between">
         <div>
-          <span className="text-xs font-semibold uppercase tracking-wide text-coral-600">Day {day.dayNumber}</span>
+          <span className="text-xs font-semibold uppercase tracking-wide text-blue-600">Day {day.dayNumber}</span>
           <h3 className="font-display text-lg font-medium text-ink-900">{day.title}</h3>
           {day.date && <p className="text-xs text-ink-400">{formatDay(day.date)}</p>}
         </div>
@@ -58,7 +58,7 @@ function DayLogCard({
 
       <button
         onClick={onAdd}
-        className="mt-3 flex w-full items-center justify-center gap-1.5 rounded-xl border border-dashed border-ink-200 py-2.5 text-sm font-medium text-ink-500 hover:border-coral-300 hover:text-coral-600"
+        className="mt-3 flex w-full items-center justify-center gap-1.5 rounded-xl border border-dashed border-ink-200 py-2.5 text-sm font-medium text-ink-500 hover:border-blue-300 hover:text-blue-600"
       >
         <Plus size={15} />
         Add expense for Day {day.dayNumber}
@@ -108,7 +108,7 @@ export function DailyLog({
           <ExpenseList expenses={unassigned} onRemove={onRemove} />
           <button
             onClick={() => openFor(undefined)}
-            className="mt-3 flex w-full items-center justify-center gap-1.5 rounded-xl border border-dashed border-ink-200 py-2.5 text-sm font-medium text-ink-500 hover:border-coral-300 hover:text-coral-600"
+            className="mt-3 flex w-full items-center justify-center gap-1.5 rounded-xl border border-dashed border-ink-200 py-2.5 text-sm font-medium text-ink-500 hover:border-blue-300 hover:text-blue-600"
           >
             <Plus size={15} />
             Add expense

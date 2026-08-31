@@ -142,14 +142,14 @@ export function TemplatesPage() {
                 <p className="mt-1 text-sm text-ink-400">{tpl.tagline}</p>
                 <div className="mt-3 flex flex-wrap gap-1.5">
                   {tpl.interests.map((i2) => (
-                    <span key={i2} className="rounded-full bg-coral-50 px-2 py-0.5 text-xs font-medium capitalize text-coral-700">
+                    <span key={i2} className="rounded-full bg-blue-50 px-2 py-0.5 text-xs font-medium capitalize text-blue-700">
                       {i2}
                     </span>
                   ))}
                 </div>
                 <div className="mt-3 flex items-center justify-between text-xs text-ink-400">
                   <span>{tpl.days} days · {tpl.pace} pace</span>
-                  <span className="flex items-center gap-1 font-semibold text-coral-600">
+                  <span className="flex items-center gap-1 font-semibold text-blue-600">
                     Use template <ArrowRight size={12} />
                   </span>
                 </div>
@@ -164,7 +164,7 @@ export function TemplatesPage() {
       {activeTemplate && (
         <div className="fixed inset-0 z-40 flex items-center justify-center bg-ink-900/40 p-4" onClick={() => setActiveTemplate(null)}>
           <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-lift" onClick={(e) => e.stopPropagation()}>
-            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-coral-50 text-coral-500">
+            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-500">
               <Sparkles size={18} />
             </span>
             <h3 className="mt-3 font-display text-xl font-medium text-ink-900">{activeTemplate.name}</h3>
@@ -179,9 +179,9 @@ export function TemplatesPage() {
               onKeyDown={(e) => e.key === "Enter" && startFromTemplate()}
               placeholder="e.g. Lisbon, Portugal"
               disabled={isBuilding}
-              className="mt-1.5 w-full rounded-lg border border-ink-100 bg-cream-50 px-3 py-2 text-sm text-ink-800 outline-none focus:border-coral-300 disabled:opacity-60"
+              className="mt-1.5 w-full rounded-lg border border-ink-100 bg-cream-50 px-3 py-2 text-sm text-ink-800 outline-none focus:border-blue-300 disabled:opacity-60"
             />
-            {error && <p className="mt-2 text-xs text-coral-600">{error}</p>}
+            {error && <p className="mt-2 text-xs text-blue-600">{error}</p>}
             <div className="mt-5 flex justify-end gap-2">
               <button
                 onClick={() => setActiveTemplate(null)}
@@ -193,7 +193,7 @@ export function TemplatesPage() {
               <button
                 onClick={startFromTemplate}
                 disabled={!destination.trim() || isBuilding}
-                className="flex items-center gap-1.5 rounded-full bg-coral-500 px-4 py-2 text-sm font-semibold text-white hover:opacity-90 disabled:opacity-40"
+                className="flex items-center gap-1.5 rounded-full bg-gradient-to-b from-blue-500 to-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-glow transition-all hover:brightness-110 disabled:opacity-40 disabled:shadow-none"
               >
                 {isBuilding && <Loader2 size={14} className="animate-spin" />}
                 {isBuilding ? "Planning..." : "Build itinerary"}

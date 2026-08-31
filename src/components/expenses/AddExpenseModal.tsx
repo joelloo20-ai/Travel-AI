@@ -110,7 +110,7 @@ export function AddExpenseModal({
           >
             <div className="mb-4 flex items-center justify-between">
               <div>
-                <p className="text-xs font-semibold uppercase tracking-wide text-coral-600">{dayLabel}</p>
+                <p className="text-xs font-semibold uppercase tracking-wide text-blue-600">{dayLabel}</p>
                 <h3 className="font-display text-lg font-medium text-ink-900">Add expense</h3>
               </div>
               <button onClick={close} className="rounded-full p-1.5 text-ink-400 hover:bg-ink-50">
@@ -131,9 +131,9 @@ export function AddExpenseModal({
               <div className="space-y-2.5">
                 <button
                   onClick={() => fileInputRef.current?.click()}
-                  className="flex w-full items-center gap-3 rounded-xl border-2 border-dashed border-coral-200 bg-coral-50 p-4 text-left transition-colors hover:bg-coral-100"
+                  className="flex w-full items-center gap-3 rounded-xl border-2 border-dashed border-blue-200 bg-blue-50 p-4 text-left transition-colors hover:bg-blue-100"
                 >
-                  <span className="flex h-11 w-11 items-center justify-center rounded-full bg-coral-500 text-white">
+                  <span className="flex h-11 w-11 items-center justify-center rounded-full bg-blue-500 text-white">
                     <Camera size={20} />
                   </span>
                   <div>
@@ -159,14 +159,14 @@ export function AddExpenseModal({
             {mode === "scanning" && (
               <div className="flex flex-col items-center gap-3 py-8">
                 {thumbnail && <img src={thumbnail} alt="Receipt" className="h-24 w-24 rounded-lg object-cover opacity-70" />}
-                <Loader2 size={22} className="animate-spin text-coral-500" />
+                <Loader2 size={22} className="animate-spin text-blue-500" />
                 <p className="text-sm text-ink-500">Reading your receipt...</p>
               </div>
             )}
 
             {(mode === "review" || mode === "manual") && (
               <div className="space-y-3">
-                {scanError && <p className="rounded-lg bg-coral-50 px-3 py-2 text-xs text-coral-700">{scanError}</p>}
+                {scanError && <p className="rounded-lg bg-blue-50 px-3 py-2 text-xs text-blue-700">{scanError}</p>}
                 {thumbnail && mode === "review" && (
                   <div className="flex items-center gap-2 rounded-lg bg-teal-500/10 px-3 py-2 text-xs font-medium text-teal-700">
                     <Check size={14} />
@@ -180,7 +180,7 @@ export function AddExpenseModal({
                       value={label}
                       onChange={(e) => setLabel(e.target.value)}
                       placeholder="What was it for?"
-                      className="w-full rounded-lg border border-ink-100 bg-cream-50 px-3 py-2 text-sm text-ink-800 outline-none focus:border-coral-300"
+                      className="w-full rounded-lg border border-ink-100 bg-cream-50 px-3 py-2 text-sm text-ink-800 outline-none focus:border-blue-300"
                     />
                     <div className="flex gap-2">
                       <input
@@ -189,14 +189,14 @@ export function AddExpenseModal({
                         type="number"
                         min="0"
                         placeholder="Amount"
-                        className="w-2/3 rounded-lg border border-ink-100 bg-cream-50 px-3 py-2 text-sm text-ink-800 outline-none focus:border-coral-300"
+                        className="w-2/3 rounded-lg border border-ink-100 bg-cream-50 px-3 py-2 text-sm text-ink-800 outline-none focus:border-blue-300"
                       />
                       <input
                         value={currency}
                         onChange={(e) => setCurrency(e.target.value.toUpperCase())}
                         maxLength={3}
                         placeholder="USD"
-                        className="w-1/3 rounded-lg border border-ink-100 bg-cream-50 px-3 py-2 text-center text-sm uppercase text-ink-800 outline-none focus:border-coral-300"
+                        className="w-1/3 rounded-lg border border-ink-100 bg-cream-50 px-3 py-2 text-center text-sm uppercase text-ink-800 outline-none focus:border-blue-300"
                       />
                     </div>
                   </div>
@@ -205,7 +205,7 @@ export function AddExpenseModal({
                 <select
                   value={category}
                   onChange={(e) => setCategory(e.target.value as ExpenseCategory)}
-                  className="w-full rounded-lg border border-ink-100 bg-cream-50 px-3 py-2 text-sm text-ink-700 outline-none focus:border-coral-300"
+                  className="w-full rounded-lg border border-ink-100 bg-cream-50 px-3 py-2 text-sm text-ink-700 outline-none focus:border-blue-300"
                 >
                   {EXPENSE_CATEGORIES.map((c) => (
                     <option key={c} value={c}>
@@ -221,7 +221,7 @@ export function AddExpenseModal({
                   <button
                     onClick={save}
                     disabled={!label.trim() || !amount}
-                    className="rounded-full bg-coral-500 px-4 py-2 text-sm font-semibold text-white hover:opacity-90 disabled:opacity-40"
+                    className="rounded-full bg-gradient-to-b from-blue-500 to-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-glow transition-all hover:brightness-110 disabled:opacity-40 disabled:shadow-none"
                   >
                     Save expense
                   </button>
