@@ -1,3 +1,4 @@
+import { apiUrl } from "./apiBase";
 import type { ExpenseCategory } from "../types";
 
 export interface ParsedReceipt {
@@ -18,7 +19,7 @@ export interface ReceiptResult {
 export async function parseReceipt(dataUrl: string, mediaType: string): Promise<ReceiptResult> {
   const imageBase64 = dataUrl.split(",")[1] ?? "";
   try {
-    const res = await fetch("/api/parse-receipt", {
+    const res = await fetch(apiUrl("/api/parse-receipt"), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ imageBase64, mediaType }),

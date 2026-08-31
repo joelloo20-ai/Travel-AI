@@ -83,4 +83,13 @@ Either way, without `ANTHROPIC_API_KEY` set the live site still works — it jus
 
 `.github/workflows/deploy-pages.yml` builds the frontend (`npm run build:pages`, which sets the correct `/Travel-AI/` base path) and publishes it to GitHub Pages on every push to `main`, or on demand via **Actions → Deploy static build to GitHub Pages → Run workflow**.
 
-GitHub Pages only serves static files — there's no server, so `/api/itinerary` is unreachable there. The app detects this automatically and falls back to the local template generator (same as when no API key is set), so the site still works end to end; it just never calls Claude. For real AI-generated itineraries, use the Render deployment above instead.
+GitHub Pages only serves static files — there's no server there at all. Itinerary generation detects this automatically and falls back to the local template generator (same as when no API key is set), so *that* feature still works end to end; it just never calls Claude. **Document upload/scanning and receipt scanning have no such fallback** — they need a real server to call, so on a bare GitHub Pages deploy those features will always show a "couldn't reach the scanner" error, not because of a bug but because there's genuinely no backend at that URL.
+
+To make those work on GitHub Pages too, point the static build at a separately-hosted backend (e.g. the Render deployment above):
+
+1. Deploy the backend to Render (or any Node host) per the section above, and note its URL.
+2. In this repo: **Settings → Secrets and variables → Actions → Variables** → add a repository variable named `API_BASE_URL` set to that URL (e.g. `https://wayfare.onrender.com`, no trailing slash).
+3. On that backend, set `ALLOWED_ORIGINS` to your Pages URL (e.g. `https://joelloo20-ai.github.io`) so its CORS policy allows the cross-origin requests — see `.env.example`.
+4. Re-run the Pages deploy (push to `main`, or **Actions → Deploy static build to GitHub Pages → Run workflow**). The build picks up `API_BASE_URL` as `VITE_API_BASE` and every `/api/...` call from the static site now goes to your Render backend instead of nowhere.
+
+Without that setup, GitHub Pages is a read-only demo of the planner UI with template itineraries — genuinely live AI parsing (documents, receipts, Claude-generated itineraries) needs the Render deployment either as the site itself, or wired in as above.

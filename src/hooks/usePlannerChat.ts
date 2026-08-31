@@ -93,10 +93,38 @@ const INITIAL_PROMPT: StepPrompt = {
 
 const INITIAL_MESSAGE = makeMessage("assistant", INITIAL_PROMPT.text);
 
-// Builds a deterministic recap from the structured fields (flight legs, total price) rather
-// than trusting Claude's freeform summary alone to mention them.
+function formatDateSpan(startIso: string, endIso: string | null): string {
+  const start = new Date(startIso + "T00:00:00");
+  const startStr = start.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  if (!endIso) return start.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+  const end = new Date(endIso + "T00:00:00");
+  const endStr = end.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+  return `${startStr} – ${endStr}`;
+}
+
+// Builds a warm, deterministic recap from the structured fields (dates, travelers, flight
+// legs, total price) — using **bold** markers MessageBubble renders — rather than trusting
+// Claude's freeform summary alone to mention them.
 function formatExtractionRecap(parsed: ParsedTravelDocument): string {
-  const lines = [parsed.summary];
+  const lines: string[] = [];
+
+  const dest = parsed.destination ? `**${parsed.destination}**` : "your trip";
+  lines.push(`Got it — I've read through ${parsed.flights.length ? "your flight details" : "this"} for ${dest}.`);
+
+  const facts: string[] = [];
+  if (parsed.startDate) {
+    const days =
+      parsed.startDate && parsed.endDate
+        ? Math.round((new Date(parsed.endDate).getTime() - new Date(parsed.startDate).getTime()) / 86_400_000) + 1
+        : null;
+    facts.push(`**${formatDateSpan(parsed.startDate, parsed.endDate)}**${days ? ` (${days} days)` : ""}`);
+  }
+  if (parsed.travelerNames.length) {
+    facts.push(`with **${parsed.travelerNames.join(" and ")}**`);
+  } else if (parsed.travelers) {
+    facts.push(`for **${parsed.travelers} traveler${parsed.travelers > 1 ? "s" : ""}**`);
+  }
+  if (facts.length) lines.push(`${facts.join(", ")}.`);
 
   if (parsed.flights.length) {
     const legs = parsed.flights.map((f) => {
@@ -109,7 +137,7 @@ function formatExtractionRecap(parsed: ParsedTravelDocument): string {
   }
 
   if (parsed.totalCost != null) {
-    lines.push(`Total: ${formatCurrency(parsed.totalCost, parsed.currency ?? "USD")}`);
+    lines.push(`**Total: ${formatCurrency(parsed.totalCost, parsed.currency ?? "USD")}**`);
   }
 
   lines.push("Want me to use these details to start planning?");

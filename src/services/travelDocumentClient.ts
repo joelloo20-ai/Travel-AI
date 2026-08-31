@@ -1,3 +1,5 @@
+import { apiUrl } from "./apiBase";
+
 export interface ParsedFlightLeg {
   airline: string | null;
   flightNumber: string | null;
@@ -13,6 +15,7 @@ export interface ParsedTravelDocument {
   startDate: string | null;
   endDate: string | null;
   travelers: number | null;
+  travelerNames: string[];
   flights: ParsedFlightLeg[];
   totalCost: number | null;
   currency: string | null;
@@ -32,7 +35,7 @@ export interface UploadedFile {
 
 export async function parseTravelDocuments(files: UploadedFile[]): Promise<TravelDocumentResult> {
   try {
-    const res = await fetch("/api/parse-travel-document", {
+    const res = await fetch(apiUrl("/api/parse-travel-document"), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({

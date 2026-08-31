@@ -1,3 +1,4 @@
+import { apiUrl } from "./apiBase";
 import type { Expense } from "../types";
 
 let cachedStatus: boolean | null = null;
@@ -7,7 +8,7 @@ let cachedStatus: boolean | null = null;
 export async function getSheetsStatus(): Promise<boolean> {
   if (cachedStatus !== null) return cachedStatus;
   try {
-    const res = await fetch("/api/sheets/status");
+    const res = await fetch(apiUrl("/api/sheets/status"));
     if (!res.ok) throw new Error("not ok");
     const data = await res.json();
     cachedStatus = Boolean(data.configured);
@@ -21,7 +22,7 @@ export async function getSheetsStatus(): Promise<boolean> {
  * Never throws — a missing/misconfigured sheet just means the row didn't sync. */
 export async function syncExpenseToSheet(expense: Expense, tripDestination: string): Promise<boolean> {
   try {
-    const res = await fetch("/api/sync-expense", {
+    const res = await fetch(apiUrl("/api/sync-expense"), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({

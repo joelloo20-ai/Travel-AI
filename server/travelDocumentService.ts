@@ -50,8 +50,8 @@ export async function parseTravelDocuments(files: TravelDocumentFile[]): Promise
 
   const instruction =
     files.length > 1
-      ? "These are separate travel documents for the same trip (e.g. a flight ticket and a hotel booking). Extract the destination, dates, and number of travelers, every flight leg across all of them, and the total price across all of them."
-      : "Extract the destination, dates, number of travelers, every flight leg, and the total price from this travel document.";
+      ? "These are separate travel documents for the same trip (e.g. a flight ticket and a hotel booking). Extract the destination, dates, number and names of travelers, every flight leg across all of them, and the total price across all of them."
+      : "Extract the destination, dates, number and names of travelers, every flight leg, and the total price from this travel document.";
 
   try {
     const response = await client.messages.parse({

@@ -1,4 +1,5 @@
 import { generateItinerary, type GenerateItineraryParams } from "./itineraryGenerator";
+import { apiUrl } from "./apiBase";
 import type { ItineraryDay } from "../types";
 
 export interface ItineraryResponse {
@@ -19,7 +20,7 @@ export interface ItineraryResponse {
  */
 export async function requestItinerary(params: GenerateItineraryParams): Promise<ItineraryResponse> {
   try {
-    const res = await fetch("/api/itinerary", {
+    const res = await fetch(apiUrl("/api/itinerary"), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(params),

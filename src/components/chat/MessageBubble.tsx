@@ -2,6 +2,14 @@ import clsx from "clsx";
 import { Compass } from "lucide-react";
 import type { ChatMessage } from "../../types";
 
+/** Renders "**bold**" segments as <strong>; everything else is plain text. No other markdown. */
+function renderBoldText(text: string) {
+  const parts = text.split(/(\*\*[^*]+\*\*)/g);
+  return parts.map((part, i) =>
+    part.startsWith("**") && part.endsWith("**") ? <strong key={i}>{part.slice(2, -2)}</strong> : part
+  );
+}
+
 export function MessageBubble({ message }: { message: ChatMessage }) {
   const isAssistant = message.role === "assistant";
   return (
@@ -17,7 +25,7 @@ export function MessageBubble({ message }: { message: ChatMessage }) {
           isAssistant ? "rounded-tl-sm bg-white text-ink-700 shadow-soft" : "rounded-tr-sm bg-ink-800 text-white"
         )}
       >
-        {message.text}
+        {renderBoldText(message.text)}
       </div>
     </div>
   );

@@ -2,6 +2,7 @@ import "dotenv/config";
 import path from "path";
 import { fileURLToPath } from "url";
 import express from "express";
+import cors from "cors";
 import { z } from "zod";
 import { buildItinerary } from "./itineraryService";
 import { parseReceiptImage } from "./receiptService";
@@ -13,6 +14,14 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PORT = Number(process.env.PORT) || 8787;
 
 const app = express();
+
+// Lets a separately-hosted frontend (e.g. a static GitHub Pages build with
+// VITE_API_BASE set) call this API cross-origin. Restrict to specific origins
+// via a comma-separated ALLOWED_ORIGINS env var in production if desired —
+// there's no cookie/session auth here, so an open API is a reasonable default.
+const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(",").map((s) => s.trim()).filter(Boolean);
+app.use(cors({ origin: allowedOrigins && allowedOrigins.length > 0 ? allowedOrigins : true }));
+
 app.use(express.json({ limit: "25mb" }));
 
 const INTEREST_TAGS = ["food", "culture", "nature", "nightlife", "shopping", "adventure", "relaxation", "family"] as const;

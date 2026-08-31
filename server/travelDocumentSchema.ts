@@ -31,6 +31,9 @@ export const TravelDocumentSchema = z.object({
     .min(1)
     .nullable()
     .describe("Number of travelers/passengers/guests if stated, else null."),
+  travelerNames: z
+    .array(z.string())
+    .describe("First names (or full names) of each traveler/passenger/guest found on the document(s). Empty array if none are printed."),
   flights: z
     .array(FlightLegSchema)
     .max(12)
