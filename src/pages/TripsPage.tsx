@@ -15,7 +15,7 @@ export function TripsPage() {
         </div>
         <Link
           to="/"
-          className="flex items-center gap-1.5 rounded-full bg-coral-500 px-4 py-2 text-sm font-semibold text-white shadow-soft hover:opacity-90"
+          className="flex items-center gap-1.5 rounded-full bg-gradient-to-b from-blue-500 to-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-glow transition-all hover:brightness-110"
         >
           <Plus size={16} />
           <span className="hidden sm:inline">Plan a trip</span>
@@ -29,7 +29,7 @@ export function TripsPage() {
             Chat with your AI planning assistant or start from a template to build your first itinerary.
           </p>
           <div className="mt-2 flex gap-2">
-            <Link to="/" className="rounded-full bg-coral-500 px-4 py-2 text-sm font-semibold text-white hover:opacity-90">
+            <Link to="/" className="rounded-full bg-gradient-to-b from-blue-500 to-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-glow transition-all hover:brightness-110">
               Start planning
             </Link>
             <Link
