@@ -26,7 +26,7 @@ export function BudgetSummary({ budget, expenses }: { budget: number; expenses: 
         <div className="flex-1">
           <p className="text-xs font-semibold uppercase tracking-wide text-ink-400">Total spent</p>
           <p className="font-display text-3xl font-medium text-ink-900">{formatCurrency(spent)}</p>
-          <p className={clsx("mt-0.5 text-sm", over ? "text-coral-600" : "text-ink-400")}>
+          <p className={clsx("mt-0.5 text-sm", over ? "text-rose-600" : "text-ink-400")}>
             {budget > 0
               ? over
                 ? `${formatCurrency(Math.abs(remaining))} over your ${formatCurrency(budget)} budget`
@@ -36,7 +36,7 @@ export function BudgetSummary({ budget, expenses }: { budget: number; expenses: 
           {budget > 0 && (
             <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-ink-100">
               <div
-                className={clsx("h-full rounded-full transition-all", over ? "bg-coral-600" : "bg-teal-500")}
+                className={clsx("h-full rounded-full transition-all", over ? "bg-rose-600" : "bg-teal-500")}
                 style={{ width: `${pct}%` }}
               />
             </div>
