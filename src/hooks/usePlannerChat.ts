@@ -1,7 +1,8 @@
 import { useCallback, useRef, useState } from "react";
 import { requestItinerary } from "../services/itineraryClient";
-import { parseTravelDocuments, type ParsedTravelDocument } from "../services/travelDocumentClient";
-import { readUploadedDocument } from "../utils/compressImage";
+import type { ParsedTravelDocument } from "../services/travelDocumentClient";
+import { extractPdfText } from "../utils/pdfText";
+import { parseTravelTextHeuristically } from "../utils/heuristicDocumentParser";
 import { formatCurrency } from "../utils/format";
 import type { ChatMessage, ExpenseCategory, InterestTag, ItineraryDay, TripPace } from "../types";
 
@@ -385,6 +386,9 @@ export function usePlannerChat() {
     [pushAssistantStep, pushUser]
   );
 
+  // Reads PDF files' text layer directly in the browser and pattern-matches trip details out of
+  // it — no AI, no server call. Images have no text to extract without OCR, so they're skipped
+  // with a note rather than silently ignored.
   const uploadDocuments = useCallback(
     async (files: File[]) => {
       if (!files.length) return;
@@ -392,22 +396,45 @@ export function usePlannerChat() {
       pushUser(`📎 ${capped.map((f) => f.name).join(", ")}`);
       setIsTyping(true);
       try {
-        const uploaded = await Promise.all(capped.map(readUploadedDocument));
-        const { parsed, error } = await parseTravelDocuments(uploaded);
-        setIsTyping(false);
+        const pdfFiles = capped.filter((f) => f.type === "application/pdf");
+        const skipped = capped.filter((f) => f.type !== "application/pdf");
 
-        if (!parsed) {
+        if (!pdfFiles.length) {
+          setIsTyping(false);
           setMessages((prev) => [
             ...prev,
-            makeMessage("assistant", error ?? "I couldn't read those files — mind trying clearer photos or different files?"),
+            makeMessage(
+              "assistant",
+              "I can only read text straight out of PDFs this way (no AI, so no photo scanning) — upload a PDF version of your ticket or itinerary and I'll pull the details out."
+            ),
           ]);
           return;
         }
 
+        const texts = await Promise.all(pdfFiles.map(extractPdfText));
+        const combinedText = texts.join("\n\n---\n\n").trim();
+
+        setIsTyping(false);
+
+        if (!combinedText) {
+          setMessages((prev) => [
+            ...prev,
+            makeMessage(
+              "assistant",
+              "That PDF doesn't have any selectable text in it (probably a scanned image) — there's nothing for a non-AI reader to pull out. Try a PDF exported directly from the airline/hotel site, or type the details in instead."
+            ),
+          ]);
+          return;
+        }
+
+        const parsed = parseTravelTextHeuristically(combinedText);
         pendingExtractionRef.current = parsed;
+        const skippedNote = skipped.length
+          ? `(Skipped ${skipped.map((f) => f.name).join(", ")} — only PDFs can be read this way.)\n\n`
+          : "";
         setMessages((prev) => [
           ...prev,
-          makeMessage("assistant", formatExtractionRecap(parsed), ["Use these details", "Start fresh instead"]),
+          makeMessage("assistant", `${skippedNote}${formatExtractionRecap(parsed)}`, ["Use these details", "Start fresh instead"]),
         ]);
       } catch {
         setIsTyping(false);

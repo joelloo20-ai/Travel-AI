@@ -51,7 +51,7 @@ export function ChatPanel({ chat }: { chat: ReturnType<typeof usePlannerChat> })
           <input
             ref={fileInputRef}
             type="file"
-            accept="image/*,application/pdf"
+            accept="application/pdf"
             multiple
             className="hidden"
             onChange={(e) => {
@@ -84,7 +84,7 @@ export function ChatPanel({ chat }: { chat: ReturnType<typeof usePlannerChat> })
           </button>
         </div>
         <p className="mt-1.5 px-2 text-center text-[11px] text-ink-300">
-          Tip: upload a plane ticket, hotel booking, or itinerary — even a few at once — and I'll pull the details out for you.
+          Tip: upload a PDF plane ticket, hotel booking, or itinerary — even a few at once — and I'll scan the text for details, no AI needed.
         </p>
       </div>
     </div>

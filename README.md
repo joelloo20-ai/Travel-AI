@@ -4,7 +4,7 @@ An AI-assistant-driven travel planner: chat with a planning assistant to build a
 
 ## Features
 
-- **Conversational planner** (`/`) — a chat assistant asks about destination, trip length, travelers, interests, and budget, then builds a full day-by-day itinerary live in the panel next to the chat. You can also upload one or several tickets, hotel bookings, or itineraries (photo or PDF) straight into the chat and Claude pulls out the destination, dates, traveler count, flight details, and total price to jump-start the questions — the price even gets logged as an expense once you save the trip.
+- **Conversational planner** (`/`) — a chat assistant asks about destination, trip length, travelers, interests, and budget, then builds a full day-by-day itinerary live in the panel next to the chat (using a local rule-based generator unless a real backend is configured — see "Itinerary generation" below). You can also upload one or several PDF tickets, hotel bookings, or itineraries straight into the chat; it reads the PDF's text directly in your browser (no AI, no server) and pulls out the destination, dates, traveler names, flight details, and total price to jump-start the questions — the price even gets logged as an expense once you save the trip.
 - **Popular Destinations** (`/templates`) — hand-crafted, specific 4-6 day itineraries for Taipei, Tokyo & Kyoto, Bangkok, and Seoul (real named neighborhoods, temples, and markets), ready to start instantly.
 - **Templates** (`/templates`) — pick a ready-made trip shape (City Explorer, Beach Relaxation, Backpacker Adventure, Romantic Getaway, Family Fun, Foodie Trail) and drop in your destination to generate an itinerary instantly.
 - **My Trips** (`/trips`) — every saved trip as a card with dates, travelers, and estimated cost. Pull down to refresh on touch devices.
@@ -24,9 +24,19 @@ An AI-assistant-driven travel planner: chat with a planning assistant to build a
 
 If `ANTHROPIC_API_KEY` isn't set, or a request to Claude fails for any reason, the server transparently falls back to `src/services/itineraryGenerator.ts` — a rule-based generator over a destination-agnostic activity pool (`src/data/activityPool.ts`) — so the app always returns an itinerary. Every response carries a `source: "ai" | "template"` flag; the UI shows an "AI-planned" badge when Claude generated the plan, and surfaces a plain-language note in chat when it fell back.
 
-## Travel document upload
+## Travel document upload (no AI required)
 
-`POST /api/parse-travel-document` (`server/travelDocumentService.ts`) lets you attach one or several plane tickets, boarding passes, hotel confirmations, or itineraries (image or PDF, up to 6 at once) from the paperclip button in the planner chat. All the files go to Claude in a single request as vision/document inputs, so it can cross-reference them — e.g. a flight ticket plus a hotel booking for the same trip — and returns structured JSON (document type, destination, start/end dates, traveler count, every flight leg with airline/flight number/route/time, and the total price) via the same Zod structured-output pattern as itinerary generation (`server/travelDocumentSchema.ts`). The assistant recaps what it found — including the flight legs and total cost, formatted deterministically from the structured fields rather than relying on freeform text — and, if you confirm, fills in the draft (skipping straight to whichever question, duration/travelers/interests, still needs an answer) and queues the total price as an expense that lands in the trip's Daily Log once you save. Images are downscaled in the browser first (`src/utils/compressImage.ts`); PDFs are sent as-is, since Claude reads them natively. Without `ANTHROPIC_API_KEY`, or if a scan fails, the assistant says so in chat and you can keep going with the regular question flow.
+The paperclip button in the planner chat accepts one or several PDFs (tickets, boarding passes, hotel confirmations, itineraries — up to 6 at once) and reads them **entirely client-side, with zero network calls**:
+
+1. `src/utils/pdfText.ts` extracts each PDF's embedded text layer using `pdfjs-dist` (dynamically imported so it doesn't add to everyone's initial page weight — only loaded when a file is actually uploaded). A scanned/image-only PDF has no text layer, so there's nothing to pull out of one; the assistant says so rather than pretending to have read it.
+2. `src/utils/heuristicDocumentParser.ts` pattern-matches over that text — dates (ISO, "5 Jan 2026", "Jan 5, 2026", `DD/MM/YYYY`), flight numbers, airport-code routes (`SIN → MEL`), a traveler headcount and names (via "Passenger Name:"-style labels), and a total price near "Total"/"Fare"/"Grand Total". The destination is guessed from the first flight's arrival airport code via a small lookup table (`src/data/airportCities.ts`).
+3. The result is shaped exactly like the AI version's output (`ParsedTravelDocument`), so it flows through the same confirm-and-fill-in-the-draft logic in `usePlannerChat.ts` regardless of which extractor produced it.
+
+This is necessarily rougher than AI extraction — regex has no real language understanding, so destination and traveler-name guesses in particular can miss or misfire on an unusual document layout. Everything it fills in is still just a starting point you can correct in the chat, same as before.
+
+**Photos aren't supported this way** (no OCR without AI) — only PDFs with real text, which is what most airline/hotel confirmation emails export as.
+
+An AI-based version of this same feature (`server/travelDocumentService.ts` + `server/travelDocumentSchema.ts` + `src/services/travelDocumentClient.ts`, sending files to Claude for structured extraction, including flight *times* which the heuristic version doesn't attempt) still exists in the codebase but isn't currently wired into the chat — swap `parseTravelTextHeuristically(...)` for a call to `parseTravelDocuments(...)` in `uploadDocuments` (in `usePlannerChat.ts`) to switch back, once a backend with `ANTHROPIC_API_KEY` is deployed.
 
 ## Receipt scanning
 
